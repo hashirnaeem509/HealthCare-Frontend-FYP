@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+//import 'package:healthcare/Screens/ui/patientdashborad.dart'; // Patient ke liye
 import 'package:healthcare/Screens/ui/registration.dart';
+//import 'package:healthcare/Screens/ui/profile.dart'; // Doctor ke liye
+import 'package:healthcare/services/auth_service.dart';
+import 'package:healthcare/Screens/ui/profile.dart';
 
 class signin extends StatefulWidget {
   const signin({super.key});
@@ -9,11 +13,11 @@ class signin extends StatefulWidget {
 }
 
 class _signinState extends State<signin> {
-   // Controllers
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscureText = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -21,10 +25,61 @@ class _signinState extends State<signin> {
     _passwordController.dispose();
     super.dispose();
   }
+
+  // 🔹 Login Method
+  Future<void> _loginUser() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      _showSnackBar("Please enter username and password");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await AuthService().loginUser(
+      username: username,
+      password: password,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      _showSnackBar(result['message'], isSuccess: true);
+
+      // 🔹 Role ke hisaab se navigate
+      if (result['role'] == 'Doctor') {
+        Navigator.pushReplacement(
+          context,
+         MaterialPageRoute(builder: (context) => const ProfilePage(role: 'Doctor',)),
+        );
+      } else if (result['role'] == 'Patient') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfilePage(role: 'Patient',)),
+        );
+      } else {
+        _showSnackBar("Role not recognized. Contact admin.");
+      }
+    } else {
+      _showSnackBar(result['message']);
+    }
+  }
+
+  void _showSnackBar(String message, {bool isSuccess = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-       body: Container(
+      body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -38,7 +93,8 @@ class _signinState extends State<signin> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.account_circle_outlined, size: 50, color: Colors.blueAccent),
+              const Icon(Icons.account_circle_outlined,
+                  size: 50, color: Colors.blueAccent),
               const SizedBox(height: 10),
               const Text(
                 'SignIn',
@@ -69,7 +125,8 @@ class _signinState extends State<signin> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                        _obscureText ? Icons.visibility : Icons.visibility_off),
                     onPressed: () {
                       setState(() {
                         _obscureText = !_obscureText;
@@ -84,21 +141,20 @@ class _signinState extends State<signin> {
 
               // Login Button
               ElevatedButton(
-                onPressed: () {
-                  // Example: print entered values
-                  // print("Username: ${_usernameController.text}");
-                  // print("Password: ${_passwordController.text}");
-                },
+                onPressed: _isLoading ? null : _loginUser,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53B2E8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                   shadowColor: Colors.blueAccent,
                   elevation: 8,
                 ),
-                child: const Text('Login', style: TextStyle(fontSize: 16)),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Login', style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 20),
 
@@ -115,7 +171,8 @@ class _signinState extends State<signin> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 75, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 75, vertical: 15),
                   elevation: 5,
                 ),
                 child: const Text('Sign Up', style: TextStyle(fontSize: 16)),
@@ -133,7 +190,7 @@ class _signinState extends State<signin> {
                 child: const Text(
                   "Don’t have account? Sign up",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 14,
                     decoration: TextDecoration.underline,
                   ),
@@ -143,8 +200,6 @@ class _signinState extends State<signin> {
           ),
         ),
       ),
-
-
     );
   }
-}
+} 

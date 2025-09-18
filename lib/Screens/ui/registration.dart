@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/ui/Signin.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:healthcare/services/auth_service.dart';
 
 class Registration extends StatefulWidget {
   const Registration({super.key});
@@ -18,9 +17,8 @@ class _RegistrationState extends State<Registration> {
   bool _obscurePassword = true;
   String? _selectedRole;
 
-  final String baseUrl =  'http://172.16.13.211:8080';
-  // Jo IP aapka backend chal raha hai
-
+  final AuthService _authService = AuthService(); 
+  // Service ka object
 
   @override
   void dispose() {
@@ -31,13 +29,11 @@ class _RegistrationState extends State<Registration> {
   }
 
   Future<void> _registerUser() async {
-    final String apiUrl = '$baseUrl/auth/register';
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-    final String name = _nameController.text.trim();
-    final String email = _emailController.text.trim();
-    final String password = _passwordController.text;
-
-    // Input Validation
+    // Input validation
     if (name.isEmpty || email.isEmpty || password.isEmpty || _selectedRole == null) {
       _showSnackBar('Please fill all fields and select a role');
       return;
@@ -53,34 +49,21 @@ class _RegistrationState extends State<Registration> {
       return;
     }
 
-    final Map<String, dynamic> userData = {
-      'username': name,
-      'email': email,
-      'password': password,
-      'role': _selectedRole,
-    };
+    final response = await _authService.registerUser(
+      username: name,
+      email: email,
+      password: password,
+      role: _selectedRole!,
+    );
 
-      print(userData);
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userData),
+    if (response['success']) {
+      _showSnackBar(response['message'], isSuccess: true);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const signin()),
       );
-    print(response.statusCode);
-      if (response.statusCode == 200) {
-        _showSnackBar('Registration successful!', isSuccess: true);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const signin()),
-        );
-      } else {
-        final responseBody = jsonDecode(response.body);
-        _showSnackBar('Failed: ${responseBody['message'] ?? response.body}');
-      }
-    } catch (e) {
-      _showSnackBar('Error: Network or server issue occurred.');
-      print('Registration error: $e');
+    } else {
+      _showSnackBar(response['message']);
     }
   }
 

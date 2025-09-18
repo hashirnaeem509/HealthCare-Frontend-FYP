@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final String role; // 👈 role receive karega
+
+  const ProfilePage({super.key, required this.role});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -20,6 +22,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController contactController = TextEditingController();
+  final TextEditingController specializationController = TextEditingController(); //  Doctor ke liye
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +108,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   border: UnderlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+
+              // 👇 Sirf Doctor ke liye Extra Field
+              if (widget.role == "Doctor") ...[
+                TextField(
+                  controller: specializationController,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.work),
+                    hintText: 'Enter Specialization',
+                    border: UnderlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
 
               // Gender selection
               Row(
@@ -147,11 +163,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: TextButton(
                   onPressed: () {
-                    // You can add saving logic here
                     print("Name: ${nameController.text}");
                     print("Email: ${emailController.text}");
                     print("Contact: ${contactController.text}");
                     print("Gender: $gender");
+
+                    if (widget.role == "Doctor") {
+                      print("Specialization: ${specializationController.text}");
+                    }
                   },
                   child: const Text(
                     'Save',
@@ -216,7 +235,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Pick from gallery
   Future _pickImageFromGallery() async {
-    final returnImage = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final returnImage =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (returnImage == null) return;
     setState(() {
       selectedImage = File(returnImage.path);
@@ -227,7 +247,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Pick from camera
   Future _pickImageFromCamera() async {
-    final returnImage = await ImagePicker().pickImage(source: ImageSource.camera);
+    final returnImage =
+        await ImagePicker().pickImage(source: ImageSource.camera);
     if (returnImage == null) return;
     setState(() {
       selectedImage = File(returnImage.path);
