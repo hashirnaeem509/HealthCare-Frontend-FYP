@@ -49,7 +49,7 @@ class _signinState extends State<signin> {
       _showSnackBar(result['message'], isSuccess: true);
 
       // 🔹 Role ke hisaab se navigate
-      if (result['role'] == 'Doctor') {
+      if (result['role'] == 'DOCTOR') {
         Navigator.pushReplacement(
           context,
          MaterialPageRoute(builder: (context) => const ProfilePage(role: 'Doctor',)),

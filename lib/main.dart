@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/Signin.dart';
+//import 'package:healthcare/Screens/ui/signin.dart';
+import 'package:healthcare/Screens/ui/splashscrren.dart';
 
 
 void main() {
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       
-      home: signin(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -1,98 +1,136 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(
-    home: PatientDashboard(),
-    debugShowCheckedModeBanner: false,
-  ));
+  runApp(const MyApp());
 }
 
-class PatientDashboard extends StatelessWidget {
-  const PatientDashboard({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-
-      // AppBar-like top container
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              color: Colors.lightBlue,
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 25,
-                    backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your asset
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Welcome John!',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
-
-            // Middle content (can add more here)
-            const Expanded(
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleIconButton(icon: Icons.folder_copy),
-                    SizedBox(width: 30),
-                    CircleIconButton(icon: Icons.science),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.lightBlue,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'PHR'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Doctor'),
-        ],
-        currentIndex: 1,
-        onTap: (index) {},
-      ),
+    return MaterialApp(
+      title: 'Patient Dashboard',
+      debugShowCheckedModeBanner: false,
+      home: const Patientdashborad(), // <-- Your screen as home
     );
   }
 }
 
-class CircleIconButton extends StatelessWidget {
-  final IconData icon;
+class Patientdashborad extends StatefulWidget {
+  const Patientdashborad({super.key});
 
-  const CircleIconButton({super.key, required this.icon});
+  @override
+  State<Patientdashborad> createState() => _PatientdashboradState();
+}
+
+class _PatientdashboradState extends State<Patientdashborad> {
+  int myIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 30,
-      backgroundColor: Colors.lightBlue,
-      child: IconButton(
-        icon: Icon(icon, color: Colors.white),
-        onPressed: () {},
+    return Scaffold(
+      body: Stack(
+        //stack is  liya use kiya h kiun ke ye ak widget ko dusry widgeet pr rakhta overlap krta
+        children: [
+          Container(
+            height: 165,
+            width: double.infinity,
+            color: Colors.lightBlue,
+            padding: EdgeInsets.symmetric(horizontal: 14),
+            child: Column(
+              children: [
+                SizedBox(height: 8),
+                Text(
+                  "Patient Dashboard",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Arial',
+                    color: Colors.black,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      height: 100,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: NetworkImage(
+                            'https://example.com/profile.jpg',
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "Welcome",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          if (myIndex == 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 500),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      shape: const CircleBorder(),
+                      backgroundColor: Colors.lightBlue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Icon(Icons.note_add, size: 30),
+                  ),
+                  SizedBox(width: 5),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      shape: const CircleBorder(),
+                      backgroundColor: Colors.lightBlue,
+                      foregroundColor: Colors.white,
+                    ),
+
+                    child: const Icon(Icons.science, size: 30),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.lightBlue,
+        showSelectedLabels: false,
+        currentIndex: myIndex,
+        onTap: (index) {
+          setState(() {
+            myIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.medical_services),
+            label: 'PHR',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person_2), label: 'Doctor'),
+        ],
       ),
     );
   }
