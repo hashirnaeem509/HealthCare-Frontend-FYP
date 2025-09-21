@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/ui/Vitallist.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -99,15 +101,21 @@ class _PatientdashboradState extends State<Patientdashborad> {
                   ),
                   SizedBox(width: 5),
                   ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      shape: const CircleBorder(),
-                      backgroundColor: Colors.lightBlue,
-                      foregroundColor: Colors.white,
-                    ),
-
-                    child: const Icon(Icons.science, size: 30),
-                  ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const VitalListScreen(), 
+      ),
+    );
+  },
+  style: ElevatedButton.styleFrom(
+    shape: const CircleBorder(),
+    backgroundColor: Colors.lightBlue,
+    foregroundColor: Colors.white,
+  ),
+  child: const Icon(Icons.science, size: 30),
+),
                 ],
               ),
             ),

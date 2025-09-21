@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ missing import
+//import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,52 +14,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Doctordashboard(),
+      home: DoctorDashboard(), //  default home screen
     );
   }
 }
 
-class Doctordashboard extends StatefulWidget {
-  const Doctordashboard({super.key});
+class DoctorDashboard extends StatefulWidget {
+  const DoctorDashboard({super.key});
 
   @override
-  State<Doctordashboard> createState() => _DoctordashboardState();
+  State<DoctorDashboard> createState() => _DoctorDashboardState();
 }
 
-class _DoctordashboardState extends State<Doctordashboard> {
+class _DoctorDashboardState extends State<DoctorDashboard> {
   List<dynamic> patients = [];
   bool isLoading = true;
 
-  String doctorName = "";
-  String doctorImage = "";
-
-  // ✅ Doctor info fetch
-  Future<void> fetchDoctorInfo() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId'); // local storage se uthaya
-
-    if (userId != null) {
-      final url = Uri.parse("http://192.168.0.101:8080/doctor/$userId");
-
-      final response = await http.get(url, headers: {
-        "Accept": "application/json",
-      });
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          doctorName = data['fullName'] ?? "Unknown";
-          doctorImage = data['profileImageUrl'] ?? "";
-        });
-      } else {
-        print("Error fetching doctor info: ${response.statusCode}");
-      }
-    }
-  }
-
-  // ✅ Patients fetch
+  //  API call function
   Future<void> fetchPatients() async {
-    final url = Uri.parse("http://192.168.0.101:8080/doctor/patients");
+    final url = Uri.parse("http://192.168.0.101:8080/doctor/patients"); // apna backend URL
+
     try {
       final response = await http.get(url, headers: {
         "Accept": "application/json",
@@ -74,21 +48,21 @@ class _DoctordashboardState extends State<Doctordashboard> {
         setState(() {
           isLoading = false;
         });
-        throw Exception("Failed to load patients: ${response.statusCode}");
+        print("Error: ${response.statusCode}");
+  print("Response body: ${response.body}");
       }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
-      print("Error: $e");
+      print("Exception: $e");
     }
   }
 
   @override
   void initState() {
     super.initState();
-    fetchDoctorInfo();
-    fetchPatients();
+    fetchPatients(); //  screen load hote hi call hoga
   }
 
   @override
@@ -96,45 +70,24 @@ class _DoctordashboardState extends State<Doctordashboard> {
     return Scaffold(
       body: Column(
         children: [
-          // Header
+          //  Header
           Container(
             width: double.infinity,
             height: 200,
             color: Colors.lightBlue,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Doctordashboard',
-                  style: const TextStyle(
+                const SizedBox(height: 40),
+                const Text(
+                  'Doctor Dashboard',
+                  style: TextStyle(
                     fontSize: 26,
                     fontFamily: 'Arial',
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white,
-                      backgroundImage: doctorImage.isNotEmpty
-                          ? NetworkImage(doctorImage)
-                          : null,
-                      child: doctorImage.isEmpty
-                          ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                          : null,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      "Hi Dr. $doctorName",
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.white,
-                        color: Colors.white,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ],
                 ),
                 const SizedBox(height: 15),
                 TextField(
@@ -153,7 +106,7 @@ class _DoctordashboardState extends State<Doctordashboard> {
             ),
           ),
 
-          // Patient List
+          //  Patients list
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -162,6 +115,7 @@ class _DoctordashboardState extends State<Doctordashboard> {
                     itemCount: patients.length,
                     itemBuilder: (context, index) {
                       final patient = patients[index];
+
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(

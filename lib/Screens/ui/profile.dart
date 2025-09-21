@@ -3,10 +3,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/ui/doctor/ui/doctordashboard.dart';
+import 'package:healthcare/Screens/ui/patientdashborad.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String role; // 👈 role receive karega
+  final String role; // 👈 role receive karega (Doctor ya Patient)
 
   const ProfilePage({super.key, required this.role});
 
@@ -22,7 +24,8 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController contactController = TextEditingController();
-  final TextEditingController specializationController = TextEditingController(); //  Doctor ke liye
+  final TextEditingController specializationController =
+      TextEditingController(); // Doctor ke liye
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +113,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 10),
 
-              // 👇 Sirf Doctor ke liye Extra Field
+              //  Sirf Doctor ke liye Extra Field
               if (widget.role == "Doctor") ...[
                 TextField(
                   controller: specializationController,
@@ -169,7 +172,21 @@ class _ProfilePageState extends State<ProfilePage> {
                     print("Gender: $gender");
 
                     if (widget.role == "Doctor") {
-                      print("Specialization: ${specializationController.text}");
+                      print(
+                          "Specialization: ${specializationController.text}");
+                      // 👉 Doctor ke liye DoctorDashboard
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const DoctorDashboard()),
+                      );
+                    } else {
+                      // 👉 Patient ke liye PatientDashboard
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const Patientdashborad()),
+                      );
                     }
                   },
                   child: const Text(
