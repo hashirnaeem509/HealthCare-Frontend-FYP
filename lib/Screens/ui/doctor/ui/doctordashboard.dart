@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-//import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,35 +30,41 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   List<dynamic> patients = [];
   bool isLoading = true;
 
-  //  API call function
   Future<void> fetchPatients() async {
-    final url = Uri.parse("http://192.168.0.101:8080/doctor/patients"); // apna backend URL
+  final url = Uri.parse("http://172.16.21.246:8080/doctor/patients");
 
-    try {
-      final response = await http.get(url, headers: {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final cookie = prefs.getString('session_cookie');
+
+    final response = await http.get(
+      url,
+      headers: {
         "Accept": "application/json",
-      });
+        if (cookie != null) "Cookie": cookie,  //  Cookie attach here
+      },
+    );
 
-      if (response.statusCode == 200) {
-        setState(() {
-          patients = json.decode(response.body);
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        print("Error: ${response.statusCode}");
-  print("Response body: ${response.body}");
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      setState(() {
+        patients = json.decode(response.body);
+        print("Patients : $patients");
+        isLoading = false;
+      });
+    } else {
       setState(() {
         isLoading = false;
       });
-      print("Exception: $e");
+      print("Error: ${response.statusCode}");
+      print("Response body: ${response.body}");
     }
+  } catch (e) {
+    setState(() {
+      isLoading = false;
+    });
+    print("Exception: $e");
   }
-
+}
   @override
   void initState() {
     super.initState();

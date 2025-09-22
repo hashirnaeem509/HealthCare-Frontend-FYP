@@ -1,32 +1,27 @@
 import 'package:flutter/material.dart';
-//import 'package:healthcare/Screens/ui/patientdashborad.dart'; // Patient ke liye
+import 'package:healthcare/Screens/ui/doctor/ui/doctordashboard.dart';
+import 'package:healthcare/Screens/ui/patientdashborad.dart';
 import 'package:healthcare/Screens/ui/registration.dart';
-//import 'package:healthcare/Screens/ui/profile.dart'; // Doctor ke liye
 import 'package:healthcare/services/auth_service.dart';
 import 'package:healthcare/Screens/ui/profile.dart';
 
-class signin extends StatefulWidget {
-  const signin({super.key});
+class SignIn extends StatefulWidget {
+  const SignIn({super.key});
 
   @override
-  State<signin> createState() => _signinState();
+  State<SignIn> createState() => _SignInState();
 }
 
-class _signinState extends State<signin> {
+class _SignInState extends State<SignIn> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscureText = true;
   bool _isLoading = false;
 
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+  
 
-  // Login Method
+  // 🔹 Login + Profile Check Flow
   Future<void> _loginUser() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
@@ -46,25 +41,39 @@ class _signinState extends State<signin> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      _showSnackBar(result['message'], isSuccess: true);
+      final String role = result['role'].toUpperCase();
+      final String checkProfileUrl = result['checkProfileUrl'];
 
-      // 🔹 Role ke hisaab se navigate
-      if (result['role'] == 'DOCTOR') {
-        Navigator.pushReplacement(
-          context,
-         MaterialPageRoute(builder: (context) => const ProfilePage(role: 'Doctor',)),
-        );
-      } else if (result['role'] == 'Patient') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfilePage(role: 'Patient',)),
-        );
+      print(role);
+
+      // 🔹 Profile check
+      bool exists = await AuthService().checkProfileExists(checkProfileUrl);
+
+      print(exists);
+      
+        // ✅ Profile exists → Go to dashboard
+        if (role == 'PATIENT') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const Patientdashborad()),
+          );
+        }
+        print("Hello hashir");
+        if (role == 'DOCTOR') {
+          print("Hello mam");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const DoctorDashboard()),
+          );
+        }
       } else {
-        _showSnackBar("Role not recognized. Contact admin.");
+        // ❌ Profile doesn't exist → Go to profile setup page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfilePage(role: 'setup')),
+        );
       }
-    } else {
-      _showSnackBar(result['message']);
-    }
+    
   }
 
   void _showSnackBar(String message, {bool isSuccess = false}) {
@@ -97,7 +106,7 @@ class _signinState extends State<signin> {
                   size: 50, color: Colors.blueAccent),
               const SizedBox(height: 10),
               const Text(
-                'SignIn',
+                'Sign In',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -141,7 +150,7 @@ class _signinState extends State<signin> {
 
               // Login Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _loginUser,
+                onPressed: _loginUser, // ✅ FIXED: no setState wrapping
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53B2E8),
                   shape: RoundedRectangleBorder(
@@ -163,7 +172,8 @@ class _signinState extends State<signin> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const Registration()),
+                    MaterialPageRoute(
+                        builder: (context) => const Registration()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -184,7 +194,8 @@ class _signinState extends State<signin> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const Registration()),
+                    MaterialPageRoute(
+                        builder: (context) => const Registration()),
                   );
                 },
                 child: const Text(
@@ -202,4 +213,4 @@ class _signinState extends State<signin> {
       ),
     );
   }
-} 
+}

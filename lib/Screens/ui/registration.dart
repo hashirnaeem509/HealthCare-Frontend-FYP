@@ -60,7 +60,7 @@ class _RegistrationState extends State<Registration> {
       _showSnackBar(response['message'], isSuccess: true);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const signin()),
+        MaterialPageRoute(builder: (context) => const SignIn()),
       );
     } else {
       _showSnackBar(response['message']);
@@ -196,7 +196,7 @@ class _RegistrationState extends State<Registration> {
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const signin()),
+                    MaterialPageRoute(builder: (context) => const SignIn()),
                   );
                 },
                 child: const Text(

@@ -8,7 +8,7 @@ import 'package:healthcare/Screens/ui/patientdashborad.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String role; // 👈 role receive karega (Doctor ya Patient)
+  final String role; //  role receive karega (Doctor ya Patient)
 
   const ProfilePage({super.key, required this.role});
 
@@ -171,23 +171,23 @@ class _ProfilePageState extends State<ProfilePage> {
                     print("Contact: ${contactController.text}");
                     print("Gender: $gender");
 
-                    if (widget.role == "Doctor") {
-                      print(
-                          "Specialization: ${specializationController.text}");
-                      // 👉 Doctor ke liye DoctorDashboard
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const DoctorDashboard()),
-                      );
-                    } else {
-                      // 👉 Patient ke liye PatientDashboard
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const Patientdashborad()),
-                      );
-                    }
+                    // if (widget.role == "Doctor") {
+                    //   print(
+                    //       "Specialization: ${specializationController.text}");
+                    //   //  Doctor ke liye DoctorDashboard
+                    //   Navigator.pushReplacement(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //         builder: (context) => const DoctorDashboard()),
+                    //   );
+                    // } else {
+                    //   //  Patient ke liye PatientDashboard
+                    //   Navigator.pushReplacement(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //         builder: (context) => const Patientdashborad()),
+                    //   );
+                    // }
                   },
                   child: const Text(
                     'Save',
