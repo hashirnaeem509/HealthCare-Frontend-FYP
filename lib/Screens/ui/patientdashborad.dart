@@ -55,22 +55,21 @@ class _PatientdashboradState extends State<Patientdashborad> {
                 Row(
                   children: [
                     Container(
-                      height: 100,
-                      width: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: NetworkImage(
-                            'https://example.com/profile.jpg',
-                          ),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
+  height: 100,
+  width: 100,
+  decoration: const BoxDecoration(
+    color: Colors.white,
+    shape: BoxShape.circle,
+    image: DecorationImage(
+      image: AssetImage('assets/images/download.png'), // local asset image
+      fit: BoxFit.cover,
+    ),
+  ),
+),
+
                     SizedBox(width: 8),
                     Text(
-                      "Welcome",
+                      "Welcome Raees",
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.white,
@@ -105,7 +104,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const VitalListScreen(), 
+        builder: (context) => const VitalHomeScreen(), 
       ),
     );
   },

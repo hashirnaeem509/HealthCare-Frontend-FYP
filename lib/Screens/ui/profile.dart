@@ -1,16 +1,19 @@
-import 'dart:core';
 import 'dart:io';
 import 'dart:typed_data';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/ui/doctor/ui/doctordashboard.dart';
 import 'package:healthcare/Screens/ui/patientdashborad.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String role; //  role receive karega (Doctor ya Patient)
+  final String role;
+  final String userId;
 
-  const ProfilePage({super.key, required this.role});
+  const ProfilePage({super.key, required this.role, required this.userId});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -20,12 +23,151 @@ class _ProfilePageState extends State<ProfilePage> {
   Uint8List? _image;
   File? selectedImage;
   String gender = 'Male';
+  DateTime? selectedDob;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController contactController = TextEditingController();
-  final TextEditingController specializationController =
-      TextEditingController(); // Doctor ke liye
+  final TextEditingController specializationController = TextEditingController();
+  final TextEditingController dobController = TextEditingController();
+
+  bool _isLoading = false;
+
+  //  Save Profile
+  Future<void> _saveProfile() async {
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final contact = contactController.text.trim();
+    final specialization = specializationController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || contact.isEmpty || selectedDob == null) {
+      _showSnackBar("Please fill all required fields ❌");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    String apiUrl = "";
+    if (widget.role.toUpperCase() == "PATIENT") {
+      apiUrl = "http://192.168.43.233:8080/patient/add?userId=${widget.userId}";
+    } else if (widget.role.toUpperCase() == "DOCTOR") {
+      apiUrl = "http://192.168.43.233:8080/doctor/add?userId=${widget.userId}";
+    } else {
+      _showSnackBar("Unknown role ");
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cookie = prefs.getString("session_cookie");
+
+      // Step 1: Upload Image
+      String? uploadedImageUrl;
+      if (selectedImage != null) {
+        var uploadReq = http.MultipartRequest(
+          "POST",
+          Uri.parse("http://192.168.43.233:8080/upload/image"),
+        );
+        uploadReq.files.add(await http.MultipartFile.fromPath("file", selectedImage!.path));
+        if (cookie != null) uploadReq.headers["Cookie"] = cookie;
+
+        var uploadRes = await uploadReq.send();
+        if (uploadRes.statusCode == 200) {
+          final respStr = await uploadRes.stream.bytesToString();
+          final jsonResp = jsonDecode(respStr);
+          uploadedImageUrl = jsonResp["imageUrl"];
+          print(" Image uploaded: $uploadedImageUrl");
+        } else {
+          _showSnackBar("Image upload failed ");
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
+      // Step 2: Prepare JSON body
+      String formattedDob = DateFormat('yyyy-MM-dd').format(selectedDob!);
+
+      final body = {
+        "fullName": name,
+        "email": email,
+        "contact": contact,
+        "gender": gender,
+        "dob": formattedDob,
+        if (widget.role.toUpperCase() == "DOCTOR") "specialization": specialization,
+        if (uploadedImageUrl != null) "profileImageUrl": uploadedImageUrl,
+      };
+
+      print(" Sending Payload: $body");
+
+      // Step 3: Send profile data
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          "Content-Type": "application/json",
+          if (cookie != null) "Cookie": cookie,
+        },
+        body: jsonEncode(body),
+      );
+
+      setState(() => _isLoading = false);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(" Profile saved: ${response.body}");
+        _showSnackBar("Profile saved successfully ", isSuccess: true);
+
+        Future.delayed(const Duration(seconds: 1), () {
+          if (widget.role.toUpperCase() == "PATIENT") {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const Patientdashborad()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const DoctorDashboard()),
+            );
+          }
+        });
+      } else {
+        print(" Failed response: ${response.body}");
+        _showSnackBar("Failed to save profile : ${response.body}");
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      print(" Error: $e");
+      _showSnackBar("Error: $e");
+    }
+  }
+
+  void _showSnackBar(String message, {bool isSuccess = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
+  Future<void> _pickDob() async {
+    DateTime initialDate = DateTime(2000, 1, 1);
+    DateTime firstDate = DateTime(1900);
+    DateTime lastDate = DateTime.now();
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDob ?? initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+
+    if (picked != null) {
+      setState(() {
+        selectedDob = picked;
+        dobController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +207,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           )
                         : const CircleAvatar(
                             radius: 80,
-                            backgroundImage: NetworkImage(
-                              "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
-                            ),
+                            backgroundColor: Colors.grey,
+                            child: Icon(Icons.person, size: 80, color: Colors.white),
                           ),
                     Positioned(
                       bottom: 0,
@@ -113,8 +254,21 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 10),
 
-              //  Sirf Doctor ke liye Extra Field
-              if (widget.role == "Doctor") ...[
+              // DOB Picker
+              TextField(
+                controller: dobController,
+                readOnly: true,
+                onTap: _pickDob,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.calendar_today),
+                  hintText: 'Select Date of Birth',
+                  border: UnderlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Doctor only field
+              if (widget.role.toUpperCase() == "DOCTOR") ...[
                 TextField(
                   controller: specializationController,
                   decoration: const InputDecoration(
@@ -165,34 +319,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: TextButton(
-                  onPressed: () {
-                    print("Name: ${nameController.text}");
-                    print("Email: ${emailController.text}");
-                    print("Contact: ${contactController.text}");
-                    print("Gender: $gender");
-
-                    // if (widget.role == "Doctor") {
-                    //   print(
-                    //       "Specialization: ${specializationController.text}");
-                    //   //  Doctor ke liye DoctorDashboard
-                    //   Navigator.pushReplacement(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //         builder: (context) => const DoctorDashboard()),
-                    //   );
-                    // } else {
-                    //   //  Patient ke liye PatientDashboard
-                    //   Navigator.pushReplacement(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //         builder: (context) => const Patientdashborad()),
-                    //   );
-                    // }
-                  },
-                  child: const Text(
-                    'Save',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
+                  onPressed: _isLoading ? null : _saveProfile,
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Save',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
                 ),
               ),
             ],
@@ -252,8 +385,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Pick from gallery
   Future _pickImageFromGallery() async {
-    final returnImage =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    final returnImage = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (returnImage == null) return;
     setState(() {
       selectedImage = File(returnImage.path);
@@ -264,8 +396,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Pick from camera
   Future _pickImageFromCamera() async {
-    final returnImage =
-        await ImagePicker().pickImage(source: ImageSource.camera);
+    final returnImage = await ImagePicker().pickImage(source: ImageSource.camera);
     if (returnImage == null) return;
     setState(() {
       selectedImage = File(returnImage.path);

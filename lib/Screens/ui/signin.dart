@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/ui/doctor/ui/doctordashboard.dart';
 import 'package:healthcare/Screens/ui/patientdashborad.dart';
 import 'package:healthcare/Screens/ui/registration.dart';
-import 'package:healthcare/services/auth_service.dart';
 import 'package:healthcare/Screens/ui/profile.dart';
+import 'package:healthcare/services/auth_service.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -18,10 +18,8 @@ class _SignInState extends State<SignIn> {
 
   bool _obscureText = true;
   bool _isLoading = false;
+  final AuthService _authService = AuthService();
 
-  
-
-  // 🔹 Login + Profile Check Flow
   Future<void> _loginUser() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
@@ -33,47 +31,36 @@ class _SignInState extends State<SignIn> {
 
     setState(() => _isLoading = true);
 
-    final result = await AuthService().loginUser(
-      username: username,
-      password: password,
-    );
+    final result = await _authService.loginUser(username: username, password: password);
 
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      final String role = result['role'].toUpperCase();
-      final String checkProfileUrl = result['checkProfileUrl'];
+      final role = result['role'] ?? '';
+      final userId = result['userId'];
+      final profileUrl = result['checkProfileUrl'];
 
-      print(role);
+      print("✅ Login Success → Role: $role, UserId: $userId");
 
-      // 🔹 Profile check
-      bool exists = await AuthService().checkProfileExists(checkProfileUrl);
+      final exists = await _authService.checkProfileExists(profileUrl);
 
-      print(exists);
-      
-        // ✅ Profile exists → Go to dashboard
-        if (role == 'PATIENT') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const Patientdashborad()),
-          );
-        }
-        print("Hello hashir");
-        if (role == 'DOCTOR') {
-          print("Hello mam");
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const DoctorDashboard()),
-          );
+      if (exists) {
+        // Go to Dashboard
+        if (role == "PATIENT") {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const Patientdashborad()));
+        } else if (role == "DOCTOR") {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DoctorDashboard()));
         }
       } else {
-        // ❌ Profile doesn't exist → Go to profile setup page
+        // Go to Profile Creation Page
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ProfilePage(role: 'setup')),
+          MaterialPageRoute(builder: (_) => ProfilePage(role: role, userId: userId ?? '')),
         );
       }
-    
+    } else {
+      _showSnackBar(result['message']);
+    }
   }
 
   void _showSnackBar(String message, {bool isSuccess = false}) {
@@ -102,45 +89,29 @@ class _SignInState extends State<SignIn> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.account_circle_outlined,
-                  size: 50, color: Colors.blueAccent),
+              const Icon(Icons.account_circle_outlined, size: 50, color: Colors.blueAccent),
               const SizedBox(height: 10),
-              const Text(
-                'Sign In',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Arial',
-                ),
-              ),
+              const Text("Sign In", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 40),
 
-              // Username Field
               TextField(
                 controller: _usernameController,
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.email_outlined),
-                  suffixIcon: Icon(Icons.person),
                   hintText: 'Username',
                   border: UnderlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Password Field
               TextField(
                 controller: _passwordController,
                 obscureText: _obscureText,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(
-                        _obscureText ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () {
-                      setState(() {
-                        _obscureText = !_obscureText;
-                      });
-                    },
+                    icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => _obscureText = !_obscureText),
                   ),
                   hintText: 'Password',
                   border: const UnderlineInputBorder(),
@@ -148,17 +119,12 @@ class _SignInState extends State<SignIn> {
               ),
               const SizedBox(height: 40),
 
-              // Login Button
               ElevatedButton(
-                onPressed: _loginUser, // ✅ FIXED: no setState wrapping
+                onPressed: _isLoading ? null : _loginUser,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53B2E8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
-                  shadowColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                   elevation: 8,
                 ),
                 child: _isLoading
@@ -167,44 +133,23 @@ class _SignInState extends State<SignIn> {
               ),
               const SizedBox(height: 20),
 
-              // Sign Up Button
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const Registration()),
-                  );
-                },
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const Registration())),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53B2E8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 75, vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  padding: const EdgeInsets.symmetric(horizontal: 75, vertical: 15),
                   elevation: 5,
                 ),
                 child: const Text('Sign Up', style: TextStyle(fontSize: 16)),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
 
-              // Sign Up Text Link
               GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const Registration()),
-                  );
-                },
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const Registration())),
                 child: const Text(
                   "Don’t have account? Sign up",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    decoration: TextDecoration.underline,
-                  ),
+                  style: TextStyle(color: Colors.black, fontSize: 14, decoration: TextDecoration.underline),
                 ),
               ),
             ],
