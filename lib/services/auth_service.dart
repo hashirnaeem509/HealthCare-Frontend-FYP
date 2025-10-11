@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'package:healthcare/Screens/ui/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+
+
 class AuthService {
-  final String baseUrl = 'http://192.168.43.233:8080';
+  //final String baseUrl = 'http://192.168.43.233:8080';
+   final String baseUrl = ApiConfig.baseUrl;
 
   // ---------------- REGISTER ----------------
   Future<Map<String, dynamic>> registerUser({

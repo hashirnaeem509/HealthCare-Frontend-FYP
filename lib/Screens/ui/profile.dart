@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:healthcare/Screens/ui/config/api_config.dart';
 
 class ProfilePage extends StatefulWidget {
   final String role;
@@ -49,9 +50,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
     String apiUrl = "";
     if (widget.role.toUpperCase() == "PATIENT") {
-      apiUrl = "http://192.168.43.233:8080/patient/add?userId=${widget.userId}";
+      apiUrl = "${ApiConfig.baseUrl}/patient/add?userId=${widget.userId}";
     } else if (widget.role.toUpperCase() == "DOCTOR") {
-      apiUrl = "http://192.168.43.233:8080/doctor/add?userId=${widget.userId}";
+      apiUrl = "${ApiConfig.baseUrl}/doctor/add?userId=${widget.userId}";
     } else {
       _showSnackBar("Unknown role ");
       setState(() => _isLoading = false);
@@ -67,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (selectedImage != null) {
         var uploadReq = http.MultipartRequest(
           "POST",
-          Uri.parse("http://192.168.43.233:8080/upload/image"),
+          Uri.parse("${ApiConfig.baseUrl}/upload/image"),
         );
         uploadReq.files.add(await http.MultipartFile.fromPath("file", selectedImage!.path));
         if (cookie != null) uploadReq.headers["Cookie"] = cookie;

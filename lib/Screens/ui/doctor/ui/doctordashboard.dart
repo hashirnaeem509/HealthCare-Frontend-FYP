@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:healthcare/Screens/ui/config/api_config.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
 
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
+  
 
   @override
   State<DoctorDashboard> createState() => _DoctorDashboardState();
@@ -31,14 +33,15 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   bool isLoading = true;
 
   Future<void> fetchPatients() async {
-    final url = Uri.parse("http://192.168.43.233:8080/doctor/patients");
+    final String url = '${ApiConfig.baseUrl}/doctor/patients';
+    //final url = Uri.parse("http://192.168.43.233:8080/doctor/patients");
 
     try {
       final prefs = await SharedPreferences.getInstance();
       final cookie = prefs.getString('session_cookie');
 
       final response = await http.get(
-        url,
+        Uri.parse(url),
         headers: {
           "Accept": "application/json",
           if (cookie != null) "Cookie": cookie, // Cookie attach here

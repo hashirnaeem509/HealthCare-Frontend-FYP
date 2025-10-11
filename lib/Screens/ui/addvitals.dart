@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:healthcare/Screens/ui/config/api_config.dart';
 
 class AddVitalDialog extends StatefulWidget {
   final Map<String, dynamic>? existingVital;
@@ -66,7 +67,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
     final cookie = prefs.getString('session_cookie');
 
     final response = await http.get(
-      Uri.parse("http://192.168.43.233:8080/patient/$id"),
+      Uri.parse('${ApiConfig.baseUrl}/patient/$id'),
       headers: {
         "Content-Type": "application/json",
         if (cookie != null) "Cookie": cookie, // ✅ Send session cookie
@@ -178,7 +179,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
     final cookie = prefs.getString('session_cookie');
 
     final response = await http.post(
-      Uri.parse("http://192.168.43.233:8080/vitals/submitVitals"),
+      Uri.parse('${ApiConfig.baseUrl}/vitals/submitVitals'),
       headers: {
         "Content-Type": "application/json",
         if (cookie != null) "Cookie": cookie, // ✅ Send session cookie
