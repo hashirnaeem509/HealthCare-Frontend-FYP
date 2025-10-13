@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/ui/addvitals.dart';
-//import 'package:http/http.dart' as http;
-//import 'dart:convert';
-//import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:healthcare/Screens/ui/config/api_config.dart';
+
 class VitalHomeScreen extends StatefulWidget {
   const VitalHomeScreen({super.key});
 
@@ -13,6 +15,83 @@ class VitalHomeScreen extends StatefulWidget {
 class _VitalHomeScreenState extends State<VitalHomeScreen> {
   String filter = "ALL";
   List<Map<String, dynamic>> vitals = [];
+
+  int myIndex = 0; // for BottomNavigationBar
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchVitalsFromApi();
+  }
+
+  /// ✅ Fetch vitals from backend using correct endpoint
+  Future<void> _fetchVitalsFromApi() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final patientId = prefs.getInt('patientId');
+      final cookie = prefs.getString('session_cookie');
+
+      if (patientId == null) {
+        print("❌ Patient ID not found in SharedPreferences");
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/vitals/by-patient/$patientId'),
+        headers: {
+          "Content-Type": "application/json",
+          if (cookie != null) "Cookie": cookie,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final List data = responseData['vitals'];
+
+        print("🧾 Response data: $data"); // 👈 debug print
+
+        setState(() {
+          vitals = data.map<Map<String, dynamic>>((v) {
+            String type = "Unknown";
+
+            // 👇 Correctly detect vital type
+            if (v['vitalName'] == "Temperature") {
+              type = "Temp";
+            } else if (v['vitalName'] == "Pulse") {
+              type = "Pulse";
+            } else if (v['vitalName'] == "Blood Pressure" ||
+                v['vitalTypeName'] == "Systolic" ||
+                v['vitalTypeName'] == "Diastolic") {
+              type = "BP";
+            }
+
+            String displayValue = v['value']?.toString() ?? '';
+            if (type == "Temp" && v['vitalTypeName'] == "Fahrenheit") {
+              displayValue += "°F";
+            } else if (type == "Temp" && v['vitalTypeName'] == "Celsius") {
+              displayValue += "°C";
+            } else if (type == "Pulse") {
+              displayValue += " bpm";
+            }
+
+            return {
+              "type": type,
+              "display": displayValue,
+              "datetime": v['date'] != null
+                  ? "${v['date']} • ${v['time'] ?? ''}"
+                  : '',
+            };
+          }).toList();
+        });
+
+        print("✅ Loaded ${vitals.length} vitals from API");
+      } else {
+        print("❌ Failed to load vitals: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("⚠️ Error fetching vitals: $e");
+    }
+  }
 
   Future<void> _openAddVitalDialog({Map<String, dynamic>? existing, int? index}) async {
     final result = await showDialog<Map<String, dynamic>>(
@@ -29,6 +108,8 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
         }
       });
     }
+
+    await _fetchVitalsFromApi(); // reload
   }
 
   List<Map<String, dynamic>> get filteredVitals {
@@ -78,7 +159,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                         child: ListTile(
                           title: Text(
                             v['type'] == 'BP'
-                                ? "BP"
+                                ? "Blood Pressure"
                                 : v['type'] == 'Pulse'
                                     ? "Pulse Rate"
                                     : "Temperature",
@@ -108,6 +189,21 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                     },
                   ),
           ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.lightBlue,
+        showSelectedLabels: false,
+        currentIndex: myIndex,
+        onTap: (index) {
+          setState(() {
+            myIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Vital'),
+          BottomNavigationBarItem(icon: Icon(Icons.graphic_eq), label: 'Graph'),
         ],
       ),
     );

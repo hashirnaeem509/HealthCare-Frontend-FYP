@@ -48,11 +48,9 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
     }
   }
 
-  /// ✅ Step 1: Load patientId & Fetch patient info
   Future<void> _loadPatientIdAndFetchInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('patientId');
-    print("🔍 Loaded patientId from SharedPreferences: $id");
     if (id != null) {
       patientId = id;
       await _fetchPatientInfo(id);
@@ -61,7 +59,6 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
     }
   }
 
-  /// ✅ Step 2: Fetch patient gender & age (with Cookie)
   Future<void> _fetchPatientInfo(int id) async {
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');
@@ -70,7 +67,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
       Uri.parse('${ApiConfig.baseUrl}/patient/$id'),
       headers: {
         "Content-Type": "application/json",
-        if (cookie != null) "Cookie": cookie, // ✅ Send session cookie
+        if (cookie != null) "Cookie": cookie,
       },
     );
 
@@ -87,8 +84,6 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
             age--;
           }
           patientAge = age;
-        } else {
-          patientAge = null;
         }
       });
       print("✅ Patient info loaded: Gender=$patientGender, Age=$patientAge");
@@ -97,7 +92,6 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
     }
   }
 
-  /// 📅 DateTime picker for vitals
   Future<void> _pickDateTime() async {
     final date = await showDatePicker(
       context: context,
@@ -116,7 +110,6 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
     });
   }
 
-  /// 💾 Save Vital to Backend (with Cookie)
   Future<void> _save() async {
     if (selectedVital.isEmpty || patientId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,7 +118,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
       return;
     }
 
-    final dateStr = "${selectedDate.toIso8601String().split('T')[0]}";
+    final dateStr = selectedDate.toIso8601String().split('T')[0];
     final timeStr =
         "${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}:00";
 
@@ -156,6 +149,15 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
         "date": dateStr,
         "time": timeStr
       });
+      if (celsiusController.text.isNotEmpty) {
+        vitalsPayload.add({
+          "vitalName": "Temperature",
+          "vitalTypeName": "Celsius",
+          "value": celsiusController.text,
+          "date": dateStr,
+          "time": timeStr
+        });
+      }
     } else if (selectedVital == "Pulse") {
       vitalsPayload.add({
         "vitalName": "Pulse",
@@ -182,7 +184,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
       Uri.parse('${ApiConfig.baseUrl}/vitals/submitVitals'),
       headers: {
         "Content-Type": "application/json",
-        if (cookie != null) "Cookie": cookie, // ✅ Send session cookie
+        if (cookie != null) "Cookie": cookie,
       },
       body: jsonEncode(payload),
     );
