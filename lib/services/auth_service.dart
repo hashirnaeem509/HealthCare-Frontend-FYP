@@ -22,7 +22,7 @@ class AuthService {
       'username': username,
       'email': email,
       'password': password,
-      'role': role,
+      'role': role.toUpperCase(),
     };
 
     try {

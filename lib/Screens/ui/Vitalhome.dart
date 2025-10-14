@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/ui/addvitals.dart';
+import 'package:healthcare/Screens/ui/vitalchartScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -84,16 +85,19 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           }).toList();
         });
 
-        print("✅ Loaded ${vitals.length} vitals from API");
+        print(" Loaded ${vitals.length} vitals from API");
       } else {
-        print("❌ Failed to load vitals: ${response.statusCode}");
+        print(" Failed to load vitals: ${response.statusCode}");
       }
     } catch (e) {
       print("⚠️ Error fetching vitals: $e");
     }
   }
 
-  Future<void> _openAddVitalDialog({Map<String, dynamic>? existing, int? index}) async {
+  Future<void> _openAddVitalDialog({
+    Map<String, dynamic>? existing,
+    int? index,
+  }) async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AddVitalDialog(existingVital: existing),
@@ -130,7 +134,10 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           TextButton.icon(
             onPressed: () => _openAddVitalDialog(),
             icon: const Icon(Icons.add_circle, color: Colors.blue),
-            label: const Text("Add Vital", style: TextStyle(color: Colors.blue)),
+            label: const Text(
+              "Add Vital",
+              style: TextStyle(color: Colors.blue),
+            ),
           ),
         ],
       ),
@@ -155,14 +162,17 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                     itemBuilder: (context, index) {
                       final v = filteredVitals[index];
                       return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         child: ListTile(
                           title: Text(
                             v['type'] == 'BP'
                                 ? "Blood Pressure"
                                 : v['type'] == 'Pulse'
-                                    ? "Pulse Rate"
-                                    : "Temperature",
+                                ? "Pulse Rate"
+                                : "Temperature",
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text("${v['display']}\n${v['datetime']}"),
@@ -171,11 +181,20 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () => _openAddVitalDialog(existing: v, index: index),
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () => _openAddVitalDialog(
+                                  existing: v,
+                                  index: index,
+                                ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     vitals.remove(v);
@@ -199,10 +218,21 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           setState(() {
             myIndex = index;
           });
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const VitalsChartScreen(),
+              ),
+            );
+          }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Vital'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.medical_services),
+            label: 'Vital',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.graphic_eq), label: 'Graph'),
         ],
       ),
@@ -218,10 +248,10 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           type == "BP"
               ? "BP"
               : type == "Temp"
-                  ? "Temperature"
-                  : type == "Pulse"
-                      ? "Pulse Rate"
-                      : "ALL",
+              ? "Temperature"
+              : type == "Pulse"
+              ? "Pulse Rate"
+              : "ALL",
         ),
         selected: isSelected,
         onSelected: (_) => setState(() => filter = type),
