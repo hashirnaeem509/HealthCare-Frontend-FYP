@@ -25,14 +25,14 @@ class _PatientdashboradState extends State<Patientdashborad> {
     _loadPatientInfo();
   }
 
-  // ✅ Patient info load from API
+  //  Patient info load from API
   Future<void> _loadPatientInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final patientId = prefs.getInt('patientId');
     final cookie = prefs.getString('session_cookie');
 
     if (patientId == null) {
-      print("⚠️ No patientId found!");
+      print(" No patientId found!");
       return;
     }
 
@@ -51,16 +51,16 @@ class _PatientdashboradState extends State<Patientdashborad> {
           fullName = data['fullName'] ?? "Unknown";
           profileImageUrl = data['profileImageUrl'];
         });
-        print("✅ Patient info loaded: $fullName");
+        print(" Patient info loaded: $fullName");
       } else {
-        print("❌ Failed to load patient info: ${response.statusCode}");
+        print(" Failed to load patient info: ${response.statusCode}");
       }
     } catch (e) {
-      print("⚠️ Error loading patient info: $e");
+      print(" Error loading patient info: $e");
     }
   }
 
-  // ✅ Logout function
+  //  Logout function
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -77,7 +77,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🔷 Header
+         
           Container(
             height: 165,
             width: double.infinity,
@@ -153,7 +153,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
             ),
           ),
 
-          // 🔹 Buttons
+          //  Buttons
           if (myIndex == 1)
             Padding(
               padding: const EdgeInsets.only(top: 500),

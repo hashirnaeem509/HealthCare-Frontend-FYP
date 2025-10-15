@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (selectedImage != null) {
         var uploadReq = http.MultipartRequest(
           "POST",
-          Uri.parse("${ApiConfig.baseUrl}/upload/image"),
+          Uri.parse("${ApiConfig.baseUrl}/uploads/images"),
         );
         uploadReq.files.add(await http.MultipartFile.fromPath("file", selectedImage!.path));
         if (cookie != null) uploadReq.headers["Cookie"] = cookie;

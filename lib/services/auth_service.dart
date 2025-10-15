@@ -3,11 +3,9 @@ import 'package:healthcare/Screens/ui/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-
-
 class AuthService {
   //final String baseUrl = 'http://192.168.43.233:8080';
-   final String baseUrl = ApiConfig.baseUrl;
+  final String baseUrl = ApiConfig.baseUrl;
 
   // ---------------- REGISTER ----------------
   Future<Map<String, dynamic>> registerUser({
@@ -35,11 +33,14 @@ class AuthService {
       final responseBody = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return {'success': true, 'message': responseBody['message'] ?? 'Registration successful'};
+        return {
+          'success': true,
+          'message': responseBody['message'] ?? 'Registration successful',
+        };
       } else {
         return {
           'success': false,
-          'message': responseBody['message'] ?? 'Something went wrong'
+          'message': responseBody['message'] ?? 'Something went wrong',
         };
       }
     } catch (e) {
@@ -64,12 +65,12 @@ class AuthService {
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
 
-        // ✅ Save Cookie
+        // Save Cookie
         final cookie = response.headers['set-cookie'];
         final prefs = await SharedPreferences.getInstance();
         if (cookie != null) await prefs.setString('session_cookie', cookie);
 
-        // ✅ Save Role + UserId
+        // Save Role + UserId
         final role = (responseBody['role'] ?? '').toUpperCase();
         final userId = responseBody['userId']?.toString();
         if (role.isNotEmpty) await prefs.setString('role', role);
@@ -83,7 +84,7 @@ class AuthService {
           print("🔹 Doctor ID: $userId");
         }
 
-        // ✅ Profile URL (for existence check)
+        //  Profile URL (for existence check)
         String checkProfileUrl = '';
         if (role == 'PATIENT') checkProfileUrl = '$baseUrl/patient/$userId';
         if (role == 'DOCTOR') checkProfileUrl = '$baseUrl/doctor/$userId';
@@ -110,7 +111,7 @@ class AuthService {
   // ---------------- PROFILE CHECK ----------------
   Future<bool> checkProfileExists(String? url) async {
     if (url == null || url.isEmpty) {
-      print("⚠️ checkProfileExists: URL is empty");
+      print(" checkProfileExists: URL is empty");
       return false;
     }
 
@@ -129,7 +130,7 @@ class AuthService {
       print("📡 Profile check status: ${response.statusCode}");
       return response.statusCode == 200;
     } catch (e) {
-      print("❌ Profile check error: $e");
+      print(" Profile check error: $e");
       return false;
     }
   }

@@ -46,7 +46,7 @@ class _SignInState extends State<SignIn> {
         final userId = result['userId']?.toString() ?? '';
         final profileUrl = result['checkProfileUrl'];
 
-        print("✅ Login Success → Role: $role | UserId: $userId");
+        print(" Login Success → Role: $role | UserId: $userId");
 
         final exists = await _authService.checkProfileExists(profileUrl);
 
@@ -99,7 +99,7 @@ class _SignInState extends State<SignIn> {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        height: MediaQuery.of(context).size.height, 
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
@@ -112,7 +112,11 @@ class _SignInState extends State<SignIn> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.account_circle_outlined, size: 50, color: Colors.blueAccent),
+              const Icon(
+                Icons.account_circle_outlined,
+                size: 50,
+                color: Colors.blueAccent,
+              ),
               const SizedBox(height: 10),
               const Text(
                 "Sign In",
@@ -138,8 +142,11 @@ class _SignInState extends State<SignIn> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscureText = !_obscureText),
+                    icon: Icon(
+                      _obscureText ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscureText = !_obscureText),
                   ),
                   hintText: 'Password',
                   border: const UnderlineInputBorder(),
@@ -152,13 +159,21 @@ class _SignInState extends State<SignIn> {
                 onPressed: _isLoading ? null : _loginUser,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53B2E8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 80,
+                    vertical: 15,
+                  ),
                   elevation: 8,
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Login', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    : const Text(
+                        'Login',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
               ),
               const SizedBox(height: 20),
 
@@ -172,12 +187,20 @@ class _SignInState extends State<SignIn> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53B2E8),
-                //  foregroundColor: const Color(0xFF53B2E8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  //  foregroundColor: const Color(0xFF53B2E8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                   //side: const BorderSide(color: Color(0xFF53B2E8), width: 1),
-                  padding: const EdgeInsets.symmetric(horizontal: 75, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 75,
+                    vertical: 15,
+                  ),
                 ),
-                child: const Text('Sign Up', style: TextStyle(fontSize: 16,color:Colors.white)),
+                child: const Text(
+                  'Sign Up',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
               const SizedBox(height: 20),
 

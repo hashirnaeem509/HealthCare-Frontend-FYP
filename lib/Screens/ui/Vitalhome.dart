@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/addvitals.dart';
-import 'package:healthcare/Screens/ui/vitalchartScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/Screens/ui/config/api_config.dart';
+import 'package:healthcare/Screens/ui/addvitals.dart';
+import 'package:healthcare/Screens/ui/vitalchartScreen.dart';
 
 class VitalHomeScreen extends StatefulWidget {
   const VitalHomeScreen({super.key});
@@ -16,8 +16,7 @@ class VitalHomeScreen extends StatefulWidget {
 class _VitalHomeScreenState extends State<VitalHomeScreen> {
   String filter = "ALL";
   List<Map<String, dynamic>> vitals = [];
-
-  int myIndex = 0; // for BottomNavigationBar
+  int myIndex = 0;
 
   @override
   void initState() {
@@ -25,17 +24,13 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
     _fetchVitalsFromApi();
   }
 
-  /// ✅ Fetch vitals from backend using correct endpoint
   Future<void> _fetchVitalsFromApi() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final patientId = prefs.getInt('patientId');
       final cookie = prefs.getString('session_cookie');
 
-      if (patientId == null) {
-        print("❌ Patient ID not found in SharedPreferences");
-        return;
-      }
+      if (patientId == null) return;
 
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/vitals/by-patient/$patientId'),
@@ -49,48 +44,104 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
         final responseData = jsonDecode(response.body);
         final List data = responseData['vitals'];
 
-        print("🧾 Response data: $data"); // 👈 debug print
+        // 👇 Group vitals (Temperature and BP)
+        Map<String, Map<String, dynamic>> groupedVitals = {};
 
-        setState(() {
-          vitals = data.map<Map<String, dynamic>>((v) {
-            String type = "Unknown";
+        for (var v in data) {
+          String name = v['vitalName'] ?? '';
+          String date = v['date'] ?? '';
+          String time = v['time'] ?? '';
+          String key = "$name-$date-$time";
 
-            // 👇 Correctly detect vital type
-            if (v['vitalName'] == "Temperature") {
-              type = "Temp";
-            } else if (v['vitalName'] == "Pulse") {
-              type = "Pulse";
-            } else if (v['vitalName'] == "Blood Pressure" ||
-                v['vitalTypeName'] == "Systolic" ||
-                v['vitalTypeName'] == "Diastolic") {
-              type = "BP";
-            }
-
-            String displayValue = v['value']?.toString() ?? '';
-            if (type == "Temp" && v['vitalTypeName'] == "Fahrenheit") {
-              displayValue += "°F";
-            } else if (type == "Temp" && v['vitalTypeName'] == "Celsius") {
-              displayValue += "°C";
-            } else if (type == "Pulse") {
-              displayValue += " bpm";
-            }
-
-            return {
-              "type": type,
-              "display": displayValue,
-              "datetime": v['date'] != null
-                  ? "${v['date']} • ${v['time'] ?? ''}"
-                  : '',
+          if (!groupedVitals.containsKey(key)) {
+            groupedVitals[key] = {
+              "type": name == "Temperature"
+                  ? "Temp"
+                  : name == "Blood Pressure"
+                      ? "BP"
+                      : "Pulse",
+              "fahrenheit": "",
+              "celsius": "",
+              "systolic": "",
+              "diastolic": "",
+              "display": "",
+              "datetime": "$date • $time",
+              "rawDate": date,
+              "rawTime": time,
             };
-          }).toList();
+          }
+
+          if (name == "Temperature") {
+            if (v['vitalTypeName'] == "Fahrenheit") {
+              groupedVitals[key]!["fahrenheit"] = "${v['value']}°F";
+            } else if (v['vitalTypeName'] == "Celsius") {
+              groupedVitals[key]!["celsius"] = "${v['value']}°C";
+            }
+          } else if (name == "Blood Pressure") {
+            if (v['vitalTypeName'] == "Systolic") {
+              groupedVitals[key]!["systolic"] = v['value'].toString();
+            } else if (v['vitalTypeName'] == "Diastolic") {
+              groupedVitals[key]!["diastolic"] = v['value'].toString();
+            }
+          } else if (name == "Pulse") {
+            groupedVitals[key]!["display"] = "${v['value']} bpm";
+          }
+        }
+
+        // ✅ Sort by date (latest first)
+        List<Map<String, dynamic>> sortedVitals = groupedVitals.values.toList();
+
+        sortedVitals.sort((a, b) {
+          DateTime parseDate(String date, String time) {
+            try {
+              if (date.contains('-')) {
+                // handle yyyy-MM-dd or dd-MM-yyyy
+                final parts = date.split('-');
+                if (parts.first.length == 4) {
+                  // yyyy-MM-dd
+                  return DateTime.parse("$date ${time.isNotEmpty ? time : '00:00'}");
+                } else {
+                  // dd-MM-yyyy
+                  return DateTime(
+                    int.parse(parts[2]),
+                    int.parse(parts[1]),
+                    int.parse(parts[0]),
+                  );
+                }
+              } else if (date.contains('/')) {
+                // handle dd/MM/yyyy or MM/dd/yyyy
+                final parts = date.split('/');
+                if (int.parse(parts[0]) > 12) {
+                  // dd/MM/yyyy
+                  return DateTime(
+                    int.parse(parts[2]),
+                    int.parse(parts[1]),
+                    int.parse(parts[0]),
+                  );
+                } else {
+                  // MM/dd/yyyy
+                  return DateTime(
+                    int.parse(parts[2]),
+                    int.parse(parts[0]),
+                    int.parse(parts[1]),
+                  );
+                }
+              }
+            } catch (_) {}
+            return DateTime(1900);
+          }
+
+          final dateA = parseDate(a['rawDate'] ?? '', a['rawTime'] ?? '');
+          final dateB = parseDate(b['rawDate'] ?? '', b['rawTime'] ?? '');
+          return dateB.compareTo(dateA); // latest first
         });
 
-        print(" Loaded ${vitals.length} vitals from API");
-      } else {
-        print(" Failed to load vitals: ${response.statusCode}");
+        setState(() {
+          vitals = sortedVitals;
+        });
       }
     } catch (e) {
-      print("⚠️ Error fetching vitals: $e");
+      print("Error fetching vitals: $e");
     }
   }
 
@@ -113,7 +164,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
       });
     }
 
-    await _fetchVitalsFromApi(); // reload
+    await _fetchVitalsFromApi();
   }
 
   List<Map<String, dynamic>> get filteredVitals {
@@ -134,10 +185,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           TextButton.icon(
             onPressed: () => _openAddVitalDialog(),
             icon: const Icon(Icons.add_circle, color: Colors.blue),
-            label: const Text(
-              "Add Vital",
-              style: TextStyle(color: Colors.blue),
-            ),
+            label: const Text("Add Vital", style: TextStyle(color: Colors.blue)),
           ),
         ],
       ),
@@ -166,35 +214,58 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                           horizontal: 12,
                           vertical: 6,
                         ),
+                        elevation: 2,
+                        color: Colors.white,
                         child: ListTile(
                           title: Text(
                             v['type'] == 'BP'
                                 ? "Blood Pressure"
                                 : v['type'] == 'Pulse'
-                                ? "Pulse Rate"
-                                : "Temperature",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ? "Pulse Rate"
+                                    : "Temperature",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
                           ),
-                          subtitle: Text("${v['display']}\n${v['datetime']}"),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              if (v['type'] == 'Temp') ...[
+                                if ((v['fahrenheit'] ?? '').isNotEmpty)
+                                  Text("Fahrenheit: ${v['fahrenheit']}"),
+                                if ((v['celsius'] ?? '').isNotEmpty)
+                                  Text("Celsius: ${v['celsius']}"),
+                              ] else if (v['type'] == 'BP') ...[
+                                if ((v['systolic'] ?? '').isNotEmpty)
+                                  Text("Systolic: ${v['systolic']} mmHg"),
+                                if ((v['diastolic'] ?? '').isNotEmpty)
+                                  Text("Diastolic: ${v['diastolic']} mmHg"),
+                              ] else ...[
+                                Text(v['display'] ?? ""),
+                              ],
+                              const SizedBox(height: 6),
+                              Text(
+                                v["datetime"] ?? "",
+                                style: const TextStyle(
+                                    fontSize: 13, color: Colors.grey),
+                              ),
+                            ],
+                          ),
                           isThreeLine: true,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.blue,
-                                ),
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.blueAccent),
                                 onPressed: () => _openAddVitalDialog(
                                   existing: v,
                                   index: index,
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red),
                                 onPressed: () {
                                   setState(() {
                                     vitals.remove(v);
@@ -230,10 +301,9 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services),
-            label: 'Vital',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.graphic_eq), label: 'Graph'),
+              icon: Icon(Icons.medical_services), label: 'Vital'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.graphic_eq), label: 'Graph'),
         ],
       ),
     );
@@ -248,10 +318,10 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           type == "BP"
               ? "BP"
               : type == "Temp"
-              ? "Temperature"
-              : type == "Pulse"
-              ? "Pulse Rate"
-              : "ALL",
+                  ? "Temperature"
+                  : type == "Pulse"
+                      ? "Pulse Rate"
+                      : "ALL",
         ),
         selected: isSelected,
         onSelected: (_) => setState(() => filter = type),

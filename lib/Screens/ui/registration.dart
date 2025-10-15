@@ -17,7 +17,7 @@ class _RegistrationState extends State<Registration> {
   bool _obscurePassword = true;
   String? _selectedRole;
 
-  final AuthService _authService = AuthService(); 
+  final AuthService _authService = AuthService();
   // Service ka object
 
   @override
@@ -34,7 +34,10 @@ class _RegistrationState extends State<Registration> {
     final password = _passwordController.text;
 
     // Input validation
-    if (name.isEmpty || email.isEmpty || password.isEmpty || _selectedRole == null) {
+    if (name.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        _selectedRole == null) {
       _showSnackBar('Please fill all fields and select a role');
       return;
     }
@@ -135,7 +138,9 @@ class _RegistrationState extends State<Registration> {
                   border: const UnderlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -184,7 +189,10 @@ class _RegistrationState extends State<Registration> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 80,
+                    vertical: 15,
+                  ),
                   elevation: 8,
                 ),
                 child: const Text('Create', style: TextStyle(fontSize: 16)),

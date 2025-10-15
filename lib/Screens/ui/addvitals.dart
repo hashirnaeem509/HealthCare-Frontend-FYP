@@ -55,7 +55,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
       patientId = id;
       await _fetchPatientInfo(id);
     } else {
-      print("❌ No patientId found in storage!");
+      print(" No patientId found in storage!");
     }
   }
 
@@ -86,9 +86,9 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
           patientAge = age;
         }
       });
-      print("✅ Patient info loaded: Gender=$patientGender, Age=$patientAge");
+      print(" Patient info loaded: Gender=$patientGender, Age=$patientAge");
     } else {
-      print("❌ Failed to fetch patient info (${response.statusCode})");
+      print(" Failed to fetch patient info (${response.statusCode})");
     }
   }
 
@@ -113,7 +113,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
   Future<void> _save() async {
     if (selectedVital.isEmpty || patientId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("⚠️ Please select vital type and make sure patient is loaded")),
+        const SnackBar(content: Text(" Please select vital type and make sure patient is loaded")),
       );
       return;
     }
@@ -191,7 +191,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ Vital saved successfully")),
+        const SnackBar(content: Text(" Vital saved successfully")),
       );
 
       String display = selectedVital == "BP"
@@ -207,7 +207,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Failed to save (${response.statusCode})")),
+        SnackBar(content: Text(" Failed to save (${response.statusCode})")),
       );
     }
   }

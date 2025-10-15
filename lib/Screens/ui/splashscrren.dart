@@ -34,8 +34,11 @@ class _SplashScreenState extends State<SplashScreen> {
             Flexible(
               child: Image.asset(
                 "assets/images/logo.png",
-                width: MediaQuery.of(context).size.width * 0.8, // 60% screen width
-                height: MediaQuery.of(context).size.height * 0.6, // 30% screen height
+                width:
+                    MediaQuery.of(context).size.width * 0.8, // 60% screen width
+                height:
+                    MediaQuery.of(context).size.height *
+                    0.6, // 30% screen height
                 fit: BoxFit.contain, // maintain aspect ratio
               ),
             ),
@@ -47,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
-            )
+            ),
           ],
         ),
       ),
