@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/ui/LabReport.dart';
 import 'package:healthcare/Screens/ui/Signin.dart';
 import 'package:healthcare/Screens/ui/Vitalhome.dart';
 import 'package:http/http.dart' as http;
@@ -77,7 +78,6 @@ class _PatientdashboradState extends State<Patientdashborad> {
     return Scaffold(
       body: Stack(
         children: [
-         
           Container(
             height: 165,
             width: double.infinity,
@@ -128,7 +128,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
                             profileImageUrl != null &&
                                 profileImageUrl!.isNotEmpty
                             ? DecorationImage(
-                                image: NetworkImage(profileImageUrl!),
+                                image: AssetImage('assets/images/download.png'),
                                 fit: BoxFit.cover,
                               )
                             : const DecorationImage(
@@ -161,13 +161,36 @@ class _PatientdashboradState extends State<Patientdashborad> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LabReport(),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(),
                       backgroundColor: Colors.lightBlue,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(30),
+
+                    ),child: const Column(
+                      mainAxisSize: MainAxisSize.min, // content fit karega
+                      children: [
+                        Icon(Icons.note_add, size: 25),
+                        SizedBox(height: 3),
+                        Text(
+                          'Lab Reports',
+                          style: TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Icon(Icons.note_add, size: 30),
+                    
                   ),
                   const SizedBox(width: 5),
                   ElevatedButton(
@@ -183,8 +206,23 @@ class _PatientdashboradState extends State<Patientdashborad> {
                       shape: const CircleBorder(),
                       backgroundColor: Colors.lightBlue,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(30), // button ka size
                     ),
-                    child: const Icon(Icons.science, size: 30),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min, // content fit karega
+                      children: [
+                        Icon(Icons.monitor_heart, size: 25),
+                        SizedBox(height: 3),
+                        Text(
+                          'Vitals Sign',
+                          style: TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -212,4 +250,4 @@ class _PatientdashboradState extends State<Patientdashborad> {
       ),
     );
   }
-} 
+}

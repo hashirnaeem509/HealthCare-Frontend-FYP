@@ -22,6 +22,8 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
 
   String patientName = '';
   String patientImage = '';
+  
+
 
   @override
   void initState() {
@@ -191,12 +193,23 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: patientImage.isNotEmpty
-                      ? NetworkImage(patientImage)
-                      : const AssetImage('assets/patient.png') as ImageProvider,
-                ),
+                Container(
+                      height: 90,
+                      width: 90,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        image:
+                            //profileImageUrl != null &&
+                             //   profileImageUrl!.isNotEmpty
+                             DecorationImage(
+                                image: AssetImage('assets/images/download.png'),
+                                fit: BoxFit.cover,
+                              )
+                            
+                      ),
+                    ),
+                
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
