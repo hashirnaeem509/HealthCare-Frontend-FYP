@@ -28,55 +28,42 @@ class LabReportService {
     }
   }
 
-  // 🧩 2️⃣ Get Fields by Test (Updated for Map response)
+  // 🧩 Get Fields by Test (same as Angular API)
   Future<List<dynamic>> getFieldsByTest(int testId) async {
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/fields'),
+    final response = await http.get(
+      Uri.parse('$baseUrl/lab-tests/$testId/fields'),
       headers: {
         'Content-Type': 'application/json',
         if (cookie != null) 'Cookie': cookie,
       },
-      body: jsonEncode({
-        "fieldName": "",
-        "labId": testId,
-        "labTest": {"labTestId": testId},
-      }),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-
-      // 🔹 Convert Map<String,dynamic> to List<Map<String,dynamic>>
-      if (data is Map<String, dynamic>) {
-        final List<Map<String, dynamic>> fields = [];
-        data.forEach((key, value) {
-          if (key.trim().isEmpty) return; // ignore empty keys
-          fields.add({
-            'fieldName': key,
-            'value': value?.toString() ?? '',
-          });
-        });
-        return fields;
+      if (data is List) {
+        return data;
+      } else if (data is Map<String, dynamic>) {
+        return data.entries
+            .map((e) => {"fieldName": e.key, "value": e.value})
+            .toList();
+      } else {
+        throw Exception("Unexpected response format");
       }
-
-      if (data is List) return data;
-
-      throw Exception("Unexpected data format from backend");
     } else {
       throw Exception('Failed to load fields: ${response.statusCode}');
     }
   }
 
-  // 🧩 3️⃣ Save Manual Report
+  // 🧩 3️⃣ Save Manual Report — UPDATED to match Angular API
   Future<String> saveManualReport(Map<String, dynamic> payload) async {
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');
 
     final response = await http.post(
-      Uri.parse('$baseUrl/save-report'),
+      Uri.parse('$baseUrl/manual'), // ✅ same as Angular: /manual
       headers: {
         'Content-Type': 'application/json',
         if (cookie != null) 'Cookie': cookie,
@@ -85,9 +72,11 @@ class LabReportService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return response.body;
+      return response.body.toString();
     } else {
-      throw Exception('Manual report save failed: ${response.statusCode}');
+      throw Exception(
+        'Manual report save failed: ${response.statusCode} - ${response.body}',
+      );
     }
   }
 
@@ -105,7 +94,6 @@ class LabReportService {
         if (cookie != null) 'Cookie': cookie,
       });
 
-    // 🔍 Debug Logs
     print("📡 Uploading to: $uri");
     print("📦 File: ${file.path}");
     print("🍪 Cookie: $cookie");
@@ -117,10 +105,8 @@ class LabReportService {
     print("📜 Response: $responseBody");
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-
       return jsonDecode(responseBody);
     } else {
-      
       throw Exception(
           'OCR upload failed → ${response.statusCode}\nResponse: $responseBody');
     }

@@ -82,7 +82,7 @@ class _ExtractedDataScreenState extends State<ExtractedDataScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Failed to save: $e")),
+        SnackBar(content: Text(" Failed to save: $e")),
       );
     }
   }
