@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import "package:image/image.dart" as img;
-import 'package:healthcare/Screens/ui/LabReportService.dart';
+import 'package:healthcare/services/LabReportService.dart';
 
 class ScanReportScreen extends StatefulWidget {
-  final int labTestId; // ✅ Lab Test ID from LabReport screen
+  final int labTestId; 
   const ScanReportScreen({super.key, required this.labTestId});
 
   @override
@@ -22,7 +22,7 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
   bool _loading = false;
   String _status = "";
 
-  // 📸 Pick Image
+  
   Future<void> _pickImage() async {
     final source = await showDialog<ImageSource>(
       context: context,
@@ -49,17 +49,17 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
       if (picked != null) {
         setState(() {
           _selectedImage = File(picked.path);
-          _status = "✅ Image selected successfully!";
+          _status = " Image selected successfully!";
         });
       }
     } catch (e) {
-      debugPrint("❌ Image picking error: $e");
+      debugPrint(" Image picking error: $e");
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Error picking image: $e")));
     }
   }
 
-  // 🗜️ Compress Image
+ 
   Future<File> _compressImage(File file) async {
     try {
       final dir = Directory.systemTemp;
@@ -88,12 +88,12 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
         return result != null ? File(result.path) : file;
       }
     } catch (e) {
-      debugPrint("❌ Compression error: $e");
+      debugPrint(" Compression error: $e");
       return file;
     }
   }
 
-  // 🧠 Extract Data (Upload + OCR)
+
   Future<void> _extractData() async {
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -108,19 +108,19 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
     });
 
     try {
-      // Step 1️⃣ Compress
+      
       final compressedImage = await _compressImage(_selectedImage!);
 
-      // Step 2️⃣ Upload & Extract
+     
       final ocrData =
           await _service.uploadAndExtractOCR(compressedImage, widget.labTestId);
 
       if (!mounted) return;
 
-      // ✅ Step 3️⃣ Return OCR data back to LabReport screen
-      Navigator.pop(context, ocrData); // 🔹 CHANGED HERE
+     
+      Navigator.pop(context, ocrData); 
     } catch (e) {
-      setState(() => _status = "❌ Extraction failed: $e");
+      setState(() => _status = " Extraction failed: $e");
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {

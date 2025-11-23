@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:healthcare/Screens/ui/config/api_config.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 void main() {
   runApp(const MyApp());

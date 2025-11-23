@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/LabReportService.dart';
+import 'package:healthcare/services/LabReportService.dart';
 
 class ExtractedDataScreen extends StatefulWidget {
   final int labTestId;
@@ -26,7 +26,7 @@ class _ExtractedDataScreenState extends State<ExtractedDataScreen> {
     _loadManualAndOCRData();
   }
 
-  /// 🧩 Load manual DB fields + merge OCR data
+
   Future<void> _loadManualAndOCRData() async {
     try {
       final manualFields = await _service.getFieldsByTest(widget.labTestId);
@@ -43,7 +43,7 @@ class _ExtractedDataScreenState extends State<ExtractedDataScreen> {
         _controllers[fieldName] = TextEditingController(text: valueFromOCR);
       }
 
-      // 🔹 Step 2: Add remaining OCR fields that are not in manualFields
+     
       widget.ocrData.forEach((key, value) {
         final fieldName = key.toString().trim();
         final fieldValue = value?.toString().trim() ?? '';
@@ -61,7 +61,7 @@ class _ExtractedDataScreenState extends State<ExtractedDataScreen> {
     }
   }
 
-  /// 💾 Save data to backend
+
   Future<void> _saveData() async {
     final Map<String, dynamic> updatedData = {};
     _controllers.forEach((key, controller) {
@@ -78,7 +78,7 @@ class _ExtractedDataScreenState extends State<ExtractedDataScreen> {
     try {
       await _service.saveManualReport(payload);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ Data saved successfully!")),
+        const SnackBar(content: Text(" Data saved successfully!")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

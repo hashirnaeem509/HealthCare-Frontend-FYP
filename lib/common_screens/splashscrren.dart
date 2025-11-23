@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare/common_screens/signin.dart';
 import 'dart:async';
-import 'Signin.dart'; // your next screen
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/LabReport.dart';
-import 'package:healthcare/Screens/ui/Signin.dart';
-import 'package:healthcare/Screens/ui/Vitalhome.dart';
+import 'package:healthcare/common_screens/signin.dart';
+import 'package:healthcare/Screens/patient/LabReport.dart';
+import 'package:healthcare/Screens/patient/Vitalhome.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:healthcare/Screens/ui/config/api_config.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 class Patientdashborad extends StatefulWidget {
   const Patientdashborad({super.key});
@@ -128,7 +128,8 @@ class _PatientdashboradState extends State<Patientdashborad> {
                             profileImageUrl != null &&
                                 profileImageUrl!.isNotEmpty
                             ? DecorationImage(
-                                image: AssetImage('assets/images/download.png'),
+                            image: NetworkImage(ApiConfig.resolveImageUrl(profileImageUrl!)),
+
                                 fit: BoxFit.cover,
                               )
                             : const DecorationImage(

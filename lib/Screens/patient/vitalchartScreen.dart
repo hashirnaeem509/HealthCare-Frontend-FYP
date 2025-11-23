@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:healthcare/Screens/ui/config/api_config.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 class VitalsChartScreen extends StatefulWidget {
   const VitalsChartScreen({super.key});

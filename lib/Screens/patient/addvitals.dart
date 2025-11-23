@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:healthcare/Screens/ui/config/api_config.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 class AddVitalDialog extends StatefulWidget {
   final Map<String, dynamic>? existingVital;
@@ -175,7 +175,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
       "vitals": vitalsPayload
     };
 
-    print("📤 Submitting vital payload: $payload");
+    print(" Submitting vital payload: $payload");
 
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');

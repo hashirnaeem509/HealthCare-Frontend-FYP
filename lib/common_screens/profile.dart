@@ -2,13 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/doctor/ui/doctordashboard.dart';
-import 'package:healthcare/Screens/ui/patientdashborad.dart';
+import 'package:healthcare/Screens/doctor/doctordashboard.dart';
+import 'package:healthcare/Screens/patient/patientdashborad.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:healthcare/Screens/ui/config/api_config.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 class ProfilePage extends StatefulWidget {
   final String role;
@@ -34,7 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _isLoading = false;
 
-  //  Save Profile
+ 
   Future<void> _saveProfile() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
@@ -63,13 +63,14 @@ class _ProfilePageState extends State<ProfilePage> {
       final prefs = await SharedPreferences.getInstance();
       final cookie = prefs.getString("session_cookie");
 
-      // Step 1: Upload Image
+      
       String? uploadedImageUrl;
       if (selectedImage != null) {
-        var uploadReq = http.MultipartRequest(
-          "POST",
-          Uri.parse("${ApiConfig.baseUrl}/uploads/images"),
-        );
+      var uploadReq = http.MultipartRequest(
+  "POST",
+  Uri.parse("${ApiConfig.uploadBaseUrl}/upload/image"),
+);
+
         uploadReq.files.add(await http.MultipartFile.fromPath("file", selectedImage!.path));
         if (cookie != null) uploadReq.headers["Cookie"] = cookie;
 
@@ -101,7 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       print(" Sending Payload: $body");
 
-      // Step 3: Send profile data
+      
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
@@ -268,7 +269,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 10),
 
-              // Doctor only field
+              
               if (widget.role.toUpperCase() == "DOCTOR") ...[
                 TextField(
                   controller: specializationController,
@@ -309,7 +310,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 30),
 
-              // Save Button
+              
               Container(
                 width: double.infinity,
                 height: 50,
@@ -336,7 +337,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Image Picker Bottom Sheet
+  
   void showImagePickerOption(BuildContext context) {
     showModalBottomSheet(
       backgroundColor: Colors.blue[100],
@@ -384,7 +385,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Pick from gallery
+
   Future _pickImageFromGallery() async {
     final returnImage = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (returnImage == null) return;
@@ -395,7 +396,7 @@ class _ProfilePageState extends State<ProfilePage> {
     Navigator.of(context).pop();
   }
 
-  // Pick from camera
+ 
   Future _pickImageFromCamera() async {
     final returnImage = await ImagePicker().pickImage(source: ImageSource.camera);
     if (returnImage == null) return;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/Signin.dart';
+import 'package:healthcare/common_screens/signin.dart';
 import 'package:healthcare/services/auth_service.dart';
 
 class Registration extends StatefulWidget {

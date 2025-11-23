@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/LabReportService.dart';
-import 'package:healthcare/Screens/ui/ScanReport.dart';
+import 'package:healthcare/services/LabReportService.dart';
+import 'package:healthcare/Screens/patient/ScanReport.dart';
+import 'package:healthcare/Screens/patient/patientdashborad.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LabReport extends StatefulWidget {
@@ -31,9 +32,9 @@ class _LabReportScreenState extends State<LabReport> {
     try {
       tests = await _service.getLabTests();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error loading tests: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error loading tests: $e")),
+      );
     } finally {
       setState(() => isLoadingTests = false);
     }
@@ -50,20 +51,19 @@ class _LabReportScreenState extends State<LabReport> {
     try {
       fields = await _service.getFieldsByTest(selectedTestId!);
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error loading fields: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error loading fields: $e")),
+      );
     } finally {
       setState(() => isLoadingFields = false);
     }
   }
 
-  /// 🔹 Go to Scan page
+
   Future<void> goToScanScreen() async {
     if (selectedTestId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Select a test first!")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Select a test first!")));
       return;
     }
 
@@ -86,33 +86,39 @@ class _LabReportScreenState extends State<LabReport> {
         extractedData.forEach((key, value) {
           final exists = fields.any((f) => f["fieldName"] == key);
           if (!exists) {
-            fields.add({"fieldName": key, "value": value.toString()});
+            fields.add({
+              "fieldName": key,
+              "value": value.toString(),
+              "fieldId": null,
+              "unit": ""
+            });
           }
         });
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ Extracted data loaded successfully!")),
+        const SnackBar(content: Text("Extracted data loaded successfully!")),
       );
     }
   }
 
-  // 🔹 SAVE MANUAL REPORT FUNCTION — FIXED TYPE ISSUE
+  // ---------------------- SAVE LOGIC FIXED ------------------------
   Future<void> saveManualReport() async {
     if (selectedTestId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Select a test first!")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Select a test first!")));
       return;
     }
 
+    // 🔥 FIX: patientId can be INT or STRING → convert safely
     final prefs = await SharedPreferences.getInstance();
-    final dynamic storedId = prefs.get('patientId'); // 🔹 can be int or string
-    final patientId = storedId?.toString(); // 🔹 safe conversion
-    final now = TimeOfDay.now();
-final formattedTime =
-    '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:00';
+    final dynamic storedId = prefs.get('patientId');  
+    final patientId = storedId?.toString();           
 
+    final now = DateTime.now();
+    final date = now.toIso8601String().split('T')[0];
+    final time =
+        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
 
     final payload = {
       "patientId": patientId,
@@ -121,44 +127,46 @@ final formattedTime =
         (t) => t["labTestId"] == selectedTestId,
         orElse: () => {"testName": "Manual Report"},
       )["testName"],
-      "date": DateTime.now().toIso8601String().split('T')[0],
-      "time": formattedTime,
-      "fieldValues": fields.map((f) {
+      "date": date,
+      "time": time,
+      "fieldValues": fields
+          .where((f) => f["fieldId"] != null)
+          .map((f) {
         return {
           "fieldId": f["fieldId"],
-          "value": f["value"] ?? "",
+          "value": f["value"],
           "unit": f["unit"] ?? "",
         };
       }).toList(),
     };
 
+    print("FINAL PAYLOAD =====> $payload");
+
     try {
       final response = await _service.saveManualReport(payload);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ Report saved successfully!")),
+        const SnackBar(content: Text("Report saved successfully!")),
       );
-      print("📤 Save Response: $response");
+
+      print("Saved Response: $response");
+
+      setState(() {
+        selectedTestId = null;
+        fields.clear();
+      });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("❌ Failed to save report: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save: $e")),
+      );
     }
   }
-
-  void cancelForm() {
-    setState(() {
-      selectedTestId = null;
-      fields.clear();
-    });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("❎ Form cleared.")));
-  }
+  // ---------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("🧪 Lab Report")),
+      appBar: AppBar(title: const Text(" Lab Report")),
       body: isLoadingTests
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -191,16 +199,12 @@ final formattedTime =
                       border: OutlineInputBorder(),
                     ),
                     value: selectedTestId,
-                    items: (tests.isNotEmpty
-                        ? tests.map<DropdownMenuItem<int>>((test) {
-                            final id = test["labTestId"] ?? 0;
-                            final name = test["testName"] ?? "Unknown Test";
-                            return DropdownMenuItem<int>(
-                              value: id,
-                              child: Text(name),
-                            );
-                          }).toList()
-                        : <DropdownMenuItem<int>>[]),
+                    items: tests.map<DropdownMenuItem<int>>((test) {
+                      return DropdownMenuItem<int>(
+                        value: test["labTestId"],
+                        child: Text(test["testName"]),
+                      );
+                    }).toList(),
                     onChanged: (val) async {
                       setState(() => selectedTestId = val);
                       await loadFieldsForSelectedTest();
@@ -270,7 +274,15 @@ final formattedTime =
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          onPressed: cancelForm,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const Patientdashborad(),
+                              ),
+                            );
+                          },
                           child: const Text("Cancel"),
                         ),
                       ),

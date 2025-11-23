@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/ui/doctor/ui/doctordashboard.dart';
-import 'package:healthcare/Screens/ui/patientdashborad.dart';
-import 'package:healthcare/Screens/ui/registration.dart';
-import 'package:healthcare/Screens/ui/profile.dart';
+import 'package:healthcare/common_screens/profile.dart';
+import 'package:healthcare/Screens/doctor/doctordashboard.dart';
+import 'package:healthcare/common_screens/registration.dart';
+import 'package:healthcare/Screens/patient/patientdashborad.dart';
 import 'package:healthcare/services/auth_service.dart';
 
 class SignIn extends StatefulWidget {

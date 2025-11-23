@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:healthcare/Screens/ui/config/api_config.dart';
-import 'package:healthcare/Screens/ui/addvitals.dart';
-import 'package:healthcare/Screens/ui/vitalchartScreen.dart';
+import 'package:healthcare/config_/api_config.dart';
+import 'package:healthcare/Screens/patient/addvitals.dart';
+import 'package:healthcare/Screens/patient/vitalchartScreen.dart';
 
 class VitalHomeScreen extends StatefulWidget {
   const VitalHomeScreen({super.key});
