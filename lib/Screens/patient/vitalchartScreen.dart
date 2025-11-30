@@ -34,7 +34,8 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
   Future<void> _fetchPatientAndVitals() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final patientId = prefs.getInt('patientId');
+     // final patientId = prefs.getInt('patientId');
+      final patientId = prefs.getString('patientId');
       final cookie = prefs.getString('session_cookie');
 
       if (patientId == null) {

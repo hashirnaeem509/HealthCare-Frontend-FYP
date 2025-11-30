@@ -4,6 +4,7 @@ import 'package:healthcare/Screens/doctor/doctordashboard.dart';
 import 'package:healthcare/common_screens/registration.dart';
 import 'package:healthcare/Screens/patient/patientdashborad.dart';
 import 'package:healthcare/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -22,66 +23,82 @@ class _SignInState extends State<SignIn> {
   final AuthService _authService = AuthService();
 
   // ---------------- LOGIN FUNCTION ----------------
-  Future<void> _loginUser() async {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
+ Future<void> _loginUser() async {
+  final username = _usernameController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
-      _showSnackBar("Please enter username and password");
-      return;
-    }
+  if (username.isEmpty || password.isEmpty) {
+    _showSnackBar("Please enter username and password");
+    return;
+  }
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final result = await _authService.loginUser(
-        username: username,
-        password: password,
-      );
+  try {
+    final result = await _authService.loginUser(
+      username: username,
+      password: password,
+    );
 
-      setState(() => _isLoading = false);
+    setState(() => _isLoading = false);
 
-      if (result['success']) {
-        final role = (result['role'] ?? '').toString().toUpperCase();
-        final userId = result['userId']?.toString() ?? '';
-        final profileUrl = result['checkProfileUrl'];
+    if (result['success']) {
+      final role = (result['role'] ?? '').toString().toUpperCase();
+      final userId = result['userId']?.toString() ?? ""; // Save as STRING
+      final profileUrl = result['checkProfileUrl'];
 
-        print(" Login Success → Role: $role | UserId: $userId");
+      print(" Login Success → Role: $role | UserId: $userId");
 
-        final exists = await _authService.checkProfileExists(profileUrl);
+      // **************** SAVE ID AS STRING ****************
+      final prefs = await SharedPreferences.getInstance();
 
-        if (exists) {
-          // Go to Dashboard
-          if (role == "PATIENT") {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const Patientdashborad()),
-            );
-          } else if (role == "DOCTOR") {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const DoctorDashboard()),
-            );
-          } else {
-            _showSnackBar("Unknown role: $role");
-          }
-        } else {
-          // Go to Profile Creation Page
+      // Save ROLE
+      await prefs.setString("role", role);
+
+      // Save USER ID (String)
+      await prefs.setString("userId", userId);
+
+      if (role == "PATIENT") {
+        await prefs.setString("patientId", userId);
+        print("Saved patientId as STRING → $userId");
+      } else if (role == "DOCTOR") {
+        await prefs.setString("doctorId", userId);
+        print("Saved doctorId as STRING → $userId");
+      }
+      // ***************************************************
+
+      final exists = await _authService.checkProfileExists(profileUrl);
+
+      if (exists) {
+        if (role == "PATIENT") {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (_) => ProfilePage(role: role, userId: userId),
-            ),
+            MaterialPageRoute(builder: (_) => const Patientdashborad()),
           );
+        } else if (role == "DOCTOR") {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const DoctorDashboard()),
+          );
+        } else {
+          _showSnackBar("Unknown role: $role");
         }
       } else {
-        _showSnackBar(result['message'] ?? "Login failed");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProfilePage(role: role, userId: userId),
+          ),
+        );
       }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar("Error: $e");
+    } else {
+      _showSnackBar(result['message'] ?? "Login failed");
     }
+  } catch (e) {
+    setState(() => _isLoading = false);
+    _showSnackBar("Error: $e");
   }
+}
 
   // ---------------- SNACKBAR ----------------
   void _showSnackBar(String message, {bool isSuccess = false}) {

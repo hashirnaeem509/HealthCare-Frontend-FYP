@@ -72,17 +72,31 @@ class AuthService {
 
         // Save Role + UserId
         final role = (responseBody['role'] ?? '').toUpperCase();
-        final userId = responseBody['userId']?.toString();
-        if (role.isNotEmpty) await prefs.setString('role', role);
-        if (userId != null) await prefs.setString('userId', userId);
+final userId = responseBody['userId']?.toString();
 
-        if (role == "PATIENT") {
-          await prefs.setInt('patientId', int.parse(userId!));
-          print("🔹 Patient ID: $userId");
-        } else if (role == "DOCTOR") {
-          await prefs.setInt('doctorId', int.parse(userId!));
-          print("🔹 Doctor ID: $userId");
-        }
+if (role.isNotEmpty) await prefs.setString('role', role);
+if (userId != null) await prefs.setString('userId', userId);
+
+if (role == "PATIENT") {
+  await prefs.setString('patientId', userId!); // save as String
+  print("🔹 Patient ID (String): $userId");
+} else if (role == "DOCTOR") {
+  await prefs.setString('doctorId', userId!); // save as String
+  print("🔹 Doctor ID (String): $userId");
+}
+
+        // final role = (responseBody['role'] ?? '').toUpperCase();
+        // final userId = responseBody['userId']?.toString();
+        // if (role.isNotEmpty) await prefs.setString('role', role);
+        // if (userId != null) await prefs.setString('userId', userId);
+
+        // if (role == "PATIENT") {
+        //   await prefs.setInt('patientId', int.parse(userId!));//string
+        //   print("🔹 Patient ID: $userId");
+        // } else if (role == "DOCTOR") {
+        //   await prefs.setInt('doctorId', int.parse(userId!));//string
+        //   print("🔹 Doctor ID: $userId");
+        // }
 
         //  Profile URL (for existence check)
         String checkProfileUrl = '';

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/patient/sharedata.dart';
 import 'package:healthcare/common_screens/signin.dart';
 import 'package:healthcare/Screens/patient/LabReport.dart';
 import 'package:healthcare/Screens/patient/Vitalhome.dart';
@@ -27,39 +28,39 @@ class _PatientdashboradState extends State<Patientdashborad> {
   }
 
   //  Patient info load from API
-  Future<void> _loadPatientInfo() async {
-    final prefs = await SharedPreferences.getInstance();
-    final patientId = prefs.getInt('patientId');
-    final cookie = prefs.getString('session_cookie');
+ Future<void> _loadPatientInfo() async {
+  final prefs = await SharedPreferences.getInstance();
+  final patientId = prefs.getString('patientId'); // now STRING
+  final cookie = prefs.getString('session_cookie');
 
-    if (patientId == null) {
-      print(" No patientId found!");
-      return;
-    }
-
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/patient/$patientId'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (cookie != null) 'Cookie': cookie,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          fullName = data['fullName'] ?? "Unknown";
-          profileImageUrl = data['profileImageUrl'];
-        });
-        print(" Patient info loaded: $fullName");
-      } else {
-        print(" Failed to load patient info: ${response.statusCode}");
-      }
-    } catch (e) {
-      print(" Error loading patient info: $e");
-    }
+  if (patientId == null || patientId.isEmpty) {
+    print(" No patientId found!");
+    return;
   }
+
+  try {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/patient/$patientId'), // string OK
+      headers: {
+        'Content-Type': 'application/json',
+        if (cookie != null) 'Cookie': cookie,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        fullName = data['fullName'] ?? "Unknown";
+        profileImageUrl = data['profileImageUrl'];
+      });
+      print(" Patient info loaded: $fullName");
+    } else {
+      print(" Failed to load patient info: ${response.statusCode}");
+    }
+  } catch (e) {
+    print(" Error loading patient info: $e");
+  }
+}
 
   //  Logout function
   Future<void> _logout() async {
@@ -125,14 +126,15 @@ class _PatientdashboradState extends State<Patientdashborad> {
                         color: Colors.white,
                         shape: BoxShape.circle,
                         image:
-                            profileImageUrl != null &&
-                                profileImageUrl!.isNotEmpty
-                            ? DecorationImage(
-                            image: NetworkImage(ApiConfig.resolveImageUrl(profileImageUrl!)),
+                            // profileImageUrl != null &&
+                            //     profileImageUrl!.isNotEmpty
+                            // ? DecorationImage(
+                            // image: NetworkImage(ApiConfig.resolveImageUrl(profileImageUrl!)),
 
-                                fit: BoxFit.cover,
-                              )
-                            : const DecorationImage(
+                            //     fit: BoxFit.cover,
+                            //   )
+                           // : const 
+                            DecorationImage(
                                 image: AssetImage('assets/images/download.png'),
                                 fit: BoxFit.cover,
                               ),
@@ -239,7 +241,17 @@ class _PatientdashboradState extends State<Patientdashborad> {
           setState(() {
             myIndex = index;
           });
-        },
+if (index == 2) {
+          // Navigate to Doctor Screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) =>  ShareScreen()),
+          );
+        }
+      },
+
+
+        
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(

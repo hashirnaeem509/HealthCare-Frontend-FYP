@@ -2,6 +2,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:healthcare/config_/api_config.dart';
+
+import 'package:healthcare/models/labs_reports.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -115,5 +117,28 @@ class LabReportService {
   
   Future<Map<String, dynamic>> uploadAndExtractOCR(File file, int labTestId) {
     return scanOCRReport(file, labTestId);
+  }
+  //   /// Fallback ALT API
+   // ✅ Get patient report summaries
+  Future<List<PatientReportSummaryDTO>> getPatientReportSummaries(String patientId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cookie = prefs.getString('session_cookie');
+
+    print("Fetching reports → patientId: $patientId, cookie: $cookie");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/by-patient/$patientId/summary'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (cookie != null) 'Cookie': cookie, // ✅ must send cookie
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => PatientReportSummaryDTO.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load reports: ${response.statusCode}');
+    }
   }
 }

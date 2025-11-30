@@ -27,7 +27,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
   Future<void> _fetchVitalsFromApi() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final patientId = prefs.getInt('patientId');
+      final patientId = prefs.getString('patientId');//string
       final cookie = prefs.getString('session_cookie');
 
       if (patientId == null) return;
@@ -44,7 +44,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
         final responseData = jsonDecode(response.body);
         final List data = responseData['vitals'];
 
-        // 👇 Group vitals (Temperature and BP)
+        //  Group vitals (Temperature and BP)
         Map<String, Map<String, dynamic>> groupedVitals = {};
 
         for (var v in data) {
@@ -88,7 +88,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           }
         }
 
-        // ✅ Sort by date (latest first)
+        //  Sort by date (latest first)
         List<Map<String, dynamic>> sortedVitals = groupedVitals.values.toList();
 
         sortedVitals.sort((a, b) {

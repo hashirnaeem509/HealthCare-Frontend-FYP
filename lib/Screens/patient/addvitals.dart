@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/config_/api_config.dart';
-
+//int not chnage!!
 class AddVitalDialog extends StatefulWidget {
   final Map<String, dynamic>? existingVital;
 
@@ -24,7 +24,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
   DateTime selectedDate = DateTime.now();
   TimeOfDay selectedTime = TimeOfDay.now();
 
-  int? patientId;
+  String? patientId;
   String patientGender = '';
   int? patientAge;
 
@@ -50,8 +50,10 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
 
   Future<void> _loadPatientIdAndFetchInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getInt('patientId');
-    if (id != null) {
+    final id = prefs.getString('patientId');//string
+    
+    
+    if (id != null ) {
       patientId = id;
       await _fetchPatientInfo(id);
     } else {
@@ -59,7 +61,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
     }
   }
 
-  Future<void> _fetchPatientInfo(int id) async {
+  Future<void> _fetchPatientInfo(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');
 
