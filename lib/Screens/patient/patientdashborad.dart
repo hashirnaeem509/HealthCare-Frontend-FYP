@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/patient/qr_code.dart';
 import 'package:healthcare/Screens/patient/sharedata.dart';
 import 'package:healthcare/common_screens/signin.dart';
 import 'package:healthcare/Screens/patient/LabReport.dart';
@@ -245,7 +246,7 @@ if (index == 2) {
           // Navigate to Doctor Screen
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) =>  ShareScreen()),
+            MaterialPageRoute(builder: (context) =>  PatientViewQRCodes()),
           );
         }
       },

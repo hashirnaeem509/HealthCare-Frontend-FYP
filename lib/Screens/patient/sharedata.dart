@@ -1,13 +1,18 @@
 
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 import 'package:healthcare/models/labs_reports.dart';
 
 import 'package:healthcare/models/vital_model.dart';
 
 import 'package:healthcare/services/LabReportService.dart';
+import 'package:healthcare/services/phrsharingService.dart';
 import 'package:healthcare/services/vital_service.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ShareScreen extends StatefulWidget {
@@ -35,13 +40,39 @@ class _ShareScreenState extends State<ShareScreen> {
   Map<String, bool> selectedItems = {};
   bool selectAll = false;
 
+  Map<String, dynamic>? doctor;
+bool doctorLoading = true;
+
+
   String today = DateTime.now().toLocal().toString().split(' ')[0];
 
   @override
   void initState() {
     super.initState();
     _loadPatient();
+    loadSelectedDoctor();
+    
   }
+
+ Future<void> loadSelectedDoctor() async {
+  final prefs = await SharedPreferences.getInstance();
+  final docJson = prefs.getString("selectedDoctor");
+
+  if (docJson != null) {
+    final doc = jsonDecode(docJson);
+    setState(() {
+      doctor = doc;
+      doctorLoading = false;
+    });
+    print("Loaded selected doctor: $doctor");
+  } else {
+    setState(() {
+      doctorLoading = false;
+      doctor = null;
+    });
+    print("No selected doctor found!");
+  }
+}
 
   // ---------------- Load patientId safely ----------------
   Future<void> _loadPatient() async {
@@ -121,26 +152,96 @@ class _ShareScreenState extends State<ShareScreen> {
       }
     });
   }
+  // Inside your ShareScreen class
+void share() async {
+  if (doctor == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Please select a doctor first!")),
+    );
+    return;
+  }
 
-  void share() {
-    final selectedVitalsList = filteredVitals
-        .asMap()
-        .entries
-        .where((e) => selectedItems[e.key.toString()] == true)
-        .map((e) => e.value)
-        .toList();
+  final selectedVitalsList = filteredVitals
+      .asMap()
+      .entries
+      .where((e) => selectedItems[e.key.toString()] == true)
+      .map((e) => e.value)
+      .toList();
 
-    final selectedReportsList = filteredReports
-        .asMap()
-        .entries
-        .where((e) => selectedItems['lab-${e.key}'] == true)
-        .map((e) => e.value)
-        .toList();
+  final selectedReportsList = filteredReports
+      .asMap()
+      .entries
+      .where((e) => selectedItems['lab-${e.key}'] == true)
+      .map((e) => e.value)
+      .toList();
+
+  if (selectedVitalsList.isEmpty && selectedReportsList.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Please select at least one item to share.")),
+    );
+    return;
+  }
+
+  // Convert to payload format
+  final vitalsPayload = selectedVitalsList.map((v) => {
+        "vitalName": v.vitalName,
+        "vitalTypeName": v.vitalTypeName,
+        "value": v.value,
+        "date": v.date,
+        "time": v.time,
+        "isCritical": false,
+      }).toList();
+
+  final labsPayload = selectedReportsList.map((r) => {
+        "reportName": r.reportName,
+        "fieldName": "Lab Summary",
+        "value": 0,
+        "date": r.reportDate,
+        "time": r.reportTime,
+        "isCritical": false,
+        "unit": "",
+      }).toList();
+
+  try {
+    await PhrSharingService.instance.shareData(
+      patientId: patientId!,
+      doctorId: doctor!['doctorId'].toString(),
+      vitals: vitalsPayload,
+      labs: labsPayload,
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Sharing ${selectedVitalsList.length + selectedReportsList.length} items")),
+      SnackBar(content: Text("✅ Data shared successfully!")),
+    );
+    setState(() {
+      selectedItems.clear(); // reset checkboxes
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Failed to share data!")),
     );
   }
+}
+
+  // void share() {
+  //   final selectedVitalsList = filteredVitals
+  //       .asMap()
+  //       .entries
+  //       .where((e) => selectedItems[e.key.toString()] == true)
+  //       .map((e) => e.value)
+  //       .toList();
+
+  //   final selectedReportsList = filteredReports
+  //       .asMap()
+  //       .entries
+  //       .where((e) => selectedItems['lab-${e.key}'] == true)
+  //       .map((e) => e.value)
+  //       .toList();
+
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(content: Text("Sharing ${selectedVitalsList.length + selectedReportsList.length} items")),
+  //   );
+  // }
 
   String normalizeType(String type) {
     final t = type.trim().toLowerCase();
@@ -183,21 +284,50 @@ class _ShareScreenState extends State<ShareScreen> {
         child: Column(
           children: [
             // DOCTOR CARD
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 6, 166, 241),
-                  borderRadius: BorderRadius.circular(8)),
-              child: Row(
-                children: [
-                  Image.asset('assets/images/download.png', width: 50),
-                  SizedBox(width: 12),
-                  Text("Dr. Sheikh Qasim Khokhar",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                ],
-              ),
+            // Container(
+            //   padding: EdgeInsets.all(12),
+            //   decoration: BoxDecoration(
+            //       color: const Color.fromARGB(255, 6, 166, 241),
+            //       borderRadius: BorderRadius.circular(8)),
+            //   child: Row(
+            //     children: [
+            //       Image.asset('assets/images/download.png', width: 50),
+            //       SizedBox(width: 12),
+            //       Text("Dr. Sheikh Qasim Khokhar",
+            //           style: TextStyle(
+            //               fontWeight: FontWeight.bold, fontSize: 16)),
+            //     ],
+            //   ),
+            // ),
+            // DOCTOR CARD
+Container(
+  padding: EdgeInsets.all(12),
+  decoration: BoxDecoration(
+      color: const Color.fromARGB(255, 6, 166, 241),
+      borderRadius: BorderRadius.circular(8)),
+  child: Row(
+    children: [
+      CircleAvatar(
+        radius: 25,
+        backgroundImage: doctor != null && doctor!['profileImageUrl'] != null
+            ? NetworkImage(doctor!['profileImageUrl'])
+            : AssetImage('assets/images/download.png') as ImageProvider,
+      ),
+      SizedBox(width: 12),
+      doctorLoading
+          ? CircularProgressIndicator(color: Colors.white)
+          : Text(
+              doctor != null ? doctor!['fullName'] ?? 'Unknown Doctor' : 'No Doctor',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white),
             ),
+    ],
+  ),
+),
+
+
             SizedBox(height: 12),
 
             // FILTER CHIPS

@@ -1,26 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientddashboard.dart';
 import 'package:healthcare/common_screens/signin.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/config_/api_config.dart';
-import 'package:qr_flutter/qr_flutter.dart'; // QR Package
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: DoctorDashboard(),
-    );
-  }
-}
+import 'package:qr_flutter/qr_flutter.dart';
+ // Import PatientDetailScreen
 
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
@@ -30,36 +16,32 @@ class DoctorDashboard extends StatefulWidget {
 }
 
 class _DoctorDashboardState extends State<DoctorDashboard> {
-  // -------------------------------
-  // 🔥 Doctor Info Variables
-  // -------------------------------
   Map<String, dynamic> doctor = {};
   bool doctorLoading = true;
-
-  // -------------------------------
-  // Patient list variables
-  // -------------------------------
   List<dynamic> patients = [];
   bool isLoading = true;
+  int myIndex = 0;
 
-  // ================================
-  // 🔥 Fetch Doctor Info (UPDATED)
-  // ================================
-  // ---------------- Fetch doctor by ID ----------------
+  @override
+  void initState() {
+    super.initState();
+    fetchDoctor();
+    fetchPatients();
+  }
+
   Future<void> fetchDoctor() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final doctorId = prefs.getString('doctorId'); // Angular style
+      final doctorId = prefs.getString('doctorId');
       final cookie = prefs.getString('session_cookie');
 
       if (doctorId == null) {
-        print("No doctorId found in SharedPreferences");
         setState(() => doctorLoading = false);
         return;
       }
 
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/doctor/$doctorId'), // Angular style URL
+        Uri.parse('${ApiConfig.baseUrl}/doctor/$doctorId'),
         headers: {
           "Accept": "application/json",
           if (cookie != null) "Cookie": cookie,
@@ -74,19 +56,41 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
           doctor = body;
           doctorLoading = false;
         });
-        print("Doctor fetched: $doctor");
       } else {
         setState(() => doctorLoading = false);
-        print("Failed to fetch doctor: ${response.statusCode}");
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => doctorLoading = false);
-      print("Doctor fetch error: $e");
     }
   }
 
-  // ---------------- QR Code ----------------
+  Future<void> fetchPatients() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cookie = prefs.getString('session_cookie');
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/doctor/patients'),
+        headers: {
+          "Accept": "application/json",
+          if (cookie != null) "Cookie": cookie,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          patients = json.decode(response.body);
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
+
   void _showDoctorQr() {
     if (doctorLoading || doctor.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,49 +130,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     );
   }
 
-
-  // ================================
-  // Fetch Patients
-  // ================================
-  Future<void> fetchPatients() async {
-    final String url = '${ApiConfig.baseUrl}/doctor/patients';
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cookie = prefs.getString('session_cookie');
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          "Accept": "application/json",
-          if (cookie != null) "Cookie": cookie,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          patients = json.decode(response.body);
-          isLoading = false;
-        });
-      } else {
-        isLoading = false;
-        print("Error: ${response.statusCode}");
-      }
-    } catch (e) {
-      isLoading = false;
-      print("Exception: $e");
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchDoctor();
-    fetchPatients();
-  }
-
-  
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,77 +151,54 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
-
-                  // TOP ROW
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-        onPressed: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.clear(); // clear session
-          // Navigate to login or home screen
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const SignIn()), // replace with login page if exists
-          );
-        },
-        icon: const Icon(Icons.arrow_back, size: 30),
-        color: Colors.black87,
-      ),
-
-                       
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.clear();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(builder: (_) => const SignIn()),
+                            );
+                          },
+                          icon: const Icon(Icons.arrow_back, size: 30),
+                          color: Colors.black87,
+                        ),
                         IconButton(
                           onPressed: _showDoctorQr,
                           icon: const Icon(Icons.qr_code, size: 35),
                           color: Colors.black87,
                         ),
-
-                        // Profile image
-                       CircleAvatar(
-  radius: 45,
-  backgroundColor: Colors.white,
-  child: ClipOval(
-    child: doctor["profileImageUrl"] != null &&
-            doctor["profileImageUrl"].toString().isNotEmpty
-        ? Image.network(
-            doctor["profileImageUrl"],
-            width: 90,
-            height: 90,
-            fit: BoxFit.cover,
-          )
-        : Image.asset(
-            "assets/images/defaultimage.png",
-            width: 90,
-            height: 90,
-            fit: BoxFit.cover,
-          ),
-  ),
-),
-
+                        Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/downloads.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
-                  // Title
                   Center(
                     child: Text(
-                     // 'Doctor Dashboard',
-                     doctorLoading ? "Loading..." : doctor["fullName"] ?? "Doctor",
+                      doctorLoading ? "Loading..." : doctor["fullName"] ?? "Doctor",
                       style: const TextStyle(
                         fontSize: 26,
-                        fontFamily: 'Arial',
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: TextField(
@@ -289,7 +227,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                       itemCount: patients.length,
                       itemBuilder: (context, index) {
                         final p = patients[index];
-
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           shape: RoundedRectangleBorder(
@@ -312,6 +249,14 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                                 ),
                               ],
                             ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PatientDetailScreen(patient: p),
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
@@ -319,6 +264,21 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.lightBlue,
+        showSelectedLabels: false,
+        currentIndex: myIndex,
+        onTap: (index) {
+          setState(() {
+            myIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'PHR'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_2), label: 'Doctor'),
+        ],
       ),
     );
   }
