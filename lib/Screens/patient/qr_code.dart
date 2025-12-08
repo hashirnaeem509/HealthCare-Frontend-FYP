@@ -81,86 +81,91 @@ class _PatientViewQRCodesState extends State<PatientViewQRCodes> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Available Doctors")),
-      body: loading
-          ? Center(child: CircularProgressIndicator())
-          : doctors.isEmpty
-              ? Center(child: Text("No doctors available"))
-              : GridView.builder(
-                  padding: EdgeInsets.all(12),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+     body: loading
+    ? Center(child: CircularProgressIndicator())
+    : doctors.isEmpty
+        ? Center(child: Text("No doctors available"))
+        : Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: GridView.builder(
+              itemCount: doctors.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.4, // Taller cards to fit content
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemBuilder: (context, index) {
+                final doc = doctors[index];
+                return GestureDetector(
+                  onTap: () => selectDoctor(doc),
+                  child: Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 5,
+                          color: Colors.black12,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                       Container(
+  width: 60,
+  height: 60,
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    image: DecorationImage(
+      // image: (doc["profileImageUrl"] != null && doc["profileImageUrl"] != "")
+      //     ? NetworkImage(doc["profileImageUrl"])
+      //     : const AssetImage('assets/images/download.png') as ImageProvider,
+      image: const AssetImage('assets/images/download.png'),
 
-                    /// 🔥 **This controls card size**
-                    childAspectRatio: 2,
+      fit: BoxFit.cover,
+    ),
+  ),
+),
 
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+
+                        SizedBox(height: 6),
+                        Text(
+                          doc["fullName"],
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          doc["specialization"],
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        QrImageView(
+                          data: doc["qrData"],
+                          size: 250
+                          , // smaller QR code
+                          version: QrVersions.auto,
+                        ),
+                      ],
+                    ),
                   ),
-                  itemCount: doctors.length,
-                  itemBuilder: (context, index) {
-                    final doc = doctors[index];
+                );
+              },
+            ),
+          ),
 
-                    return GestureDetector(
-                      onTap: () => selectDoctor(doc),
-                      child: Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 5,
-                              color: Colors.black12,
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                        ),
-
-                        /// 🔥 **Smaller Card Layout**
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 28, // smaller avatar
-                              backgroundImage:
-                                  NetworkImage(doc["profileImageUrl"]),
-                            ),
-                            SizedBox(height: 8),
-
-                            Text(
-                              doc["fullName"],
-                              maxLines: 2,
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-
-                            SizedBox(height: 4),
-
-                            Text(
-                              doc["specialization"],
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey,
-                              ),
-                            ),
-
-                            SizedBox(height: 10),
-
-                            /// 🔥 Smaller QR code
-                            QrImageView(
-                              data: doc["qrData"],
-                              size: 95, // reduced
-                              version: QrVersions.auto,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
     );
   }
 }

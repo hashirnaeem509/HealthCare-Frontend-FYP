@@ -95,18 +95,23 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
           : errorMsg.isNotEmpty
               ? Center(child: Text(errorMsg, style: const TextStyle(color: Colors.red)))
               : ListView(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   children: [
                     // Patient Info Header
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundImage: patient['profileImageUrl'] != null &&
-                                  patient['profileImageUrl'].isNotEmpty
-                              ? NetworkImage(patient['profileImageUrl'])
-                              : const AssetImage('assets/images/download.png') as ImageProvider,
-                        ),
+                         Container(
+        height: 90,
+        width: 90,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          image: const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+            ),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +124,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                         )
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
 
                     // Lab Reports
                     ...reports.map((report) {
@@ -127,7 +132,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         child: Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(20.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -135,34 +140,38 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                                   style: const TextStyle(
                                       fontSize: 16, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 8),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: DataTable(
-                                  columns: const [
-                                    DataColumn(label: Text('Field Name')),
-                                    DataColumn(label: Text('Value')),
-                                    DataColumn(label: Text('Unit')),
-                                    DataColumn(label: Text('Date')),
-                                    DataColumn(label: Text('Time')),
-                                  ],
-                                  rows: fields
-                                      .map<DataRow>((f) => DataRow(cells: [
-                                            DataCell(Text(f['fieldName'] ?? '')),
-                                            DataCell(Text(f['value']?.toString() ?? '')),
-                                            DataCell(Text(f['unit'] ?? '')),
-                                            DataCell(Text(f['date'] ?? '')),
-                                            DataCell(Text(f['time'] ?? '')),
-                                          ]))
-                                      .toList(),
-                                ),
-                              ),
+                             SingleChildScrollView(
+  scrollDirection: Axis.horizontal,
+  child: DataTable(
+    headingRowColor: MaterialStateProperty.all(Colors.blue.shade300), // Header background
+    headingTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), // Header text color
+    columns: const [
+      DataColumn(label: Text('Field Name')),
+      DataColumn(label: Text('Value')),
+      DataColumn(label: Text('Unit')),
+      DataColumn(label: Text('Date')),
+      DataColumn(label: Text('Time')),
+    ],
+    rows: fields.map<DataRow>((f) => DataRow(
+      cells: [
+        DataCell(Text(f['fieldName'] ?? '')),
+        DataCell(Text(f['value']?.toString() ?? '')),
+        DataCell(Text(f['unit'] ?? '')),
+        DataCell(Text(f['date'] ?? '')),
+        DataCell(Text(f['time'] ?? '')),
+      ],
+    )).toList(),
+  ),
+),
+
                             ],
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
     );
   }
+
 }

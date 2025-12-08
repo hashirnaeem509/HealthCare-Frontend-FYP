@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/doctor/doctordashboard.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientvitalchart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -161,12 +162,12 @@ void goGraph() {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle, color: Colors.blue),
-            onPressed: () => _openAddVitalDialog(),
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.add_circle, color: Colors.blue),
+        //     onPressed: () => _openAddVitalDialog(),
+        //   ),
+        // ],
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -177,15 +178,27 @@ void goGraph() {
                     // Patient Info
                     Container(
                       padding: const EdgeInsets.all(12),
-                      color: Colors.lightBlue[50],
+                       decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.lightBlueAccent, Colors.white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
                       child: Row(
                         children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundImage: widget.patientImage.isNotEmpty
-                                ? NetworkImage(widget.patientImage)
-                                : const AssetImage('assets/images/download.png') as ImageProvider,
-                          ),
+                             Container(
+        height: 90,
+        width: 90,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          image: const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+            ),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,16 +266,16 @@ void goGraph() {
                                     isThreeLine: true,
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, color: Colors.blue),
-                                          onPressed: () => _openAddVitalDialog(existing: v, index: index),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () => setState(() => vitals.removeAt(index)),
-                                        ),
-                                      ],
+                                      // children: [
+                                      //   IconButton(
+                                      //     icon: const Icon(Icons.edit, color: Colors.blue),
+                                      //     onPressed: () => _openAddVitalDialog(existing: v, index: index),
+                                      //   ),
+                                      //   IconButton(
+                                      //     icon: const Icon(Icons.delete, color: Colors.red),
+                                      //     onPressed: () => setState(() => vitals.removeAt(index)),
+                                      //   ),
+                                      // ],
                                     ),
                                   ),
                                 );
@@ -272,20 +285,31 @@ void goGraph() {
                   ],
                 ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
+        currentIndex: 1,
         showSelectedLabels: false,
         backgroundColor: Colors.lightBlue,
         onTap: (index) {
           if (index == 2) {
             goGraph();
           }
+          else if(index == 0){
+            godoctordashborad();
+          }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Vital'),
+          BottomNavigationBarItem(icon: Icon(Icons.health_and_safety), label: 'EHR'),
           BottomNavigationBarItem(icon: Icon(Icons.graphic_eq), label: 'Graph'),
         ],
       ),
     );
+  }
+  
+  void godoctordashborad() {
+    Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => DoctorDashboard()));
+    
   }
 }

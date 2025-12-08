@@ -172,18 +172,18 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                           icon: const Icon(Icons.qr_code, size: 35),
                           color: Colors.black87,
                         ),
-                        Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            image: const DecorationImage(
-                              image: AssetImage('assets/images/downloads.png'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
+                       Container(
+        height: 90,
+        width: 90,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          image: const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+            ),
                       ],
                     ),
                   ),
@@ -265,21 +265,21 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.lightBlue,
-        showSelectedLabels: false,
-        currentIndex: myIndex,
-        onTap: (index) {
-          setState(() {
-            myIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'PHR'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_2), label: 'Doctor'),
-        ],
-      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   backgroundColor: Colors.lightBlue,
+      //   showSelectedLabels: false,
+      //   currentIndex: myIndex,
+      //   onTap: (index) {
+      //     setState(() {
+      //       myIndex = index;
+      //     });
+      //   },
+      //   items: const [
+      //     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+      //     BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'EHR'),
+      //     BottomNavigationBarItem(icon: Icon(Icons.person_2), label: 'Doctor'),
+      //   ],
+      // ),
     );
   }
 }

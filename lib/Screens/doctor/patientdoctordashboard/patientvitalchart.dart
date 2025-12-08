@@ -189,18 +189,23 @@ class _VitalsChartScreensState extends State<VitalsChartScreens> {
         backgroundColor: Colors.lightBlue,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: widget.patientImage.isNotEmpty
-                      ? NetworkImage(widget.patientImage)
-                      : const AssetImage('assets/images/download.png')
-                          as ImageProvider,
-                ),
+                 Container(
+        height: 90,
+        width: 90,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          image: const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+            ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -225,36 +230,65 @@ class _VitalsChartScreensState extends State<VitalsChartScreens> {
 
             const SizedBox(height: 20),
 
-            Expanded(
-              child: LineChart(
-                LineChartData(
-                  minY: 0,
-                  gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        interval: 1,
-                        getTitlesWidget: (value, meta) {
-                          int index = value.toInt();
-                          if (index >= sortedDates.length) {
-                            return const SizedBox.shrink();
-                          }
-                          return Text(
-                            DateFormat('dd MMM').format(sortedDates[index]),
-                            style: const TextStyle(fontSize: 10),
-                          );
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                        sideTitles:
-                            SideTitles(showTitles: true, interval: 5)),
-                  ),
-                  lineBarsData: datasets,
-                ),
-              ),
-            ),
+    Expanded(
+  child: LineChart(
+    LineChartData(
+      minY: 40, // Pulse rate minimum (adjust if needed)
+      maxY: 200, // Pulse rate maximum (adjust if needed)
+      gridData: FlGridData(show: true),
+      borderData: FlBorderData(show: true),
+      titlesData: FlTitlesData(
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: 1,
+            getTitlesWidget: (value, meta) {
+              int index = value.toInt();
+              if (index < 0 || index >= sortedDates.length) return const SizedBox.shrink();
+              return Text(
+                DateFormat('dd MMM').format(sortedDates[index]),
+                style: const TextStyle(fontSize: 10),
+              );
+            },
+          ),
+        ),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: 20, // Step for pulse rate labels
+            reservedSize: 40,
+            getTitlesWidget: (value, meta) {
+              return Text(
+                value.toInt().toString(), // Display integer pulse rate
+                style: const TextStyle(fontSize: 12),
+              );
+            },
+          ),
+        ),
+      ),
+      lineBarsData: datasets,
+      lineTouchData: LineTouchData(
+        touchTooltipData: LineTouchTooltipData(
+          getTooltipColor: (touchedSpot) => Colors.black87,
+          tooltipRoundedRadius: 8,
+          getTooltipItems: (touchedSpots) {
+            return touchedSpots.map((spot) {
+              int index = spot.x.toInt();
+              if (index < 0 || index >= sortedDates.length) return null;
+              final date = DateFormat('dd MMM yyyy').format(sortedDates[index]);
+              return LineTooltipItem(
+                '$date\nPulse: ${spot.y.toStringAsFixed(1)}',
+                const TextStyle(color: Colors.white),
+              );
+            }).whereType<LineTooltipItem>().toList();
+          },
+        ),
+      ),
+    ),
+  ),
+),
+
+
 
             const SizedBox(height: 15),
 

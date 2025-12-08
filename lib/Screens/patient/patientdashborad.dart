@@ -77,160 +77,178 @@ class _PatientdashboradState extends State<Patientdashborad> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            height: 165,
-            width: double.infinity,
-            color: Colors.lightBlue,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Row with title + logout
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          "Patient Dashboard",
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.logout,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      tooltip: "Logout",
-                      onPressed: _logout,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
+      body: Container(
 
-                // Patient info row
-                Row(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [Color(0xFF53B2E8), Colors.white],
+      ),
+    ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [Color(0xFF53B2E8), Colors.white],
+      ),
+    ),
+                height: 165,
+              // width: MediaQuery.of(context).size.width,
+               width: double.infinity,
+              //  color: const Color.fromARGB(255, 133, 202, 234),
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      height: 90,
-                      width: 90,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        image:
-                            // profileImageUrl != null &&
-                            //     profileImageUrl!.isNotEmpty
-                            // ? DecorationImage(
-                            // image: NetworkImage(ApiConfig.resolveImageUrl(profileImageUrl!)),
-
-                            //     fit: BoxFit.cover,
-                            //   )
-                           // : const 
-                            DecorationImage(
-                                image: AssetImage('assets/images/download.png'),
-                                fit: BoxFit.cover,
+                    // Top Row with title + logout
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              "Patient Dashboard",
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                      ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.logout,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          tooltip: "Logout",
+                          onPressed: _logout,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      fullName != null ? "Welcome, $fullName" : "Welcome",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.white,
-                      ),
-                    ),
+                    const SizedBox(height: 10),
+          
+                    // Patient info row
+                    Row(
+          children: [
+            Container(
+        height: 90,
+        width: 90,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          image: const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+            ),
+            const SizedBox(width: 10),
+        
+            Expanded(       // <-- FIX ADDED
+        child: Text(
+          fullName != null ? "Welcome, $fullName" : "Welcome",
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 20,
+            color: Colors.white,
+            decoration: TextDecoration.underline,
+            decorationColor: Colors.white,
+          ),
+        ),
+            ),
+          ],
+        )
+        
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          //  Buttons
-          if (myIndex == 1)
-            Padding(
-              padding: const EdgeInsets.only(top: 500),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LabReport(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: const CircleBorder(),
-                      backgroundColor: Colors.lightBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(30),
-
-                    ),child: const Column(
-                      mainAxisSize: MainAxisSize.min, // content fit karega
-                      children: [
-                        Icon(Icons.note_add, size: 25),
-                        SizedBox(height: 3),
-                        Text(
-                          'Lab Reports',
-                          style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                  ),
-                  const SizedBox(width: 5),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const VitalHomeScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: const CircleBorder(),
-                      backgroundColor: Colors.lightBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(30), // button ka size
-                    ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min, // content fit karega
-                      children: [
-                        Icon(Icons.monitor_heart, size: 25),
-                        SizedBox(height: 3),
-                        Text(
-                          'Vitals Sign',
-                          style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ),
-            ),
-        ],
+          
+              //  Buttons
+              if (myIndex == 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 500),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LabReport(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor: Colors.lightBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(30),
+          
+                        ),child: const Column(
+                          mainAxisSize: MainAxisSize.min, // content fit karega
+                          children: [
+                            Icon(Icons.note_add, size: 25),
+                            SizedBox(height: 3),
+                            Text(
+                              'Lab Reports',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                      ),
+                      const SizedBox(width: 5),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VitalHomeScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor: Colors.lightBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(30), // button ka size
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min, // content fit karega
+                          children: [
+                            Icon(Icons.monitor_heart, size: 25),
+                            SizedBox(height: 3),
+                            Text(
+                              'Vitals Sign',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
 
       bottomNavigationBar: BottomNavigationBar(

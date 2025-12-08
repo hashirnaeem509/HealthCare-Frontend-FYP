@@ -192,15 +192,18 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
       body: Column(
         children: [
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildFilterButton("ALL"),
-              _buildFilterButton("BP"),
-              _buildFilterButton("Pulse"),
-              _buildFilterButton("Temp"),
-            ],
-          ),
+         SingleChildScrollView(
+  scrollDirection: Axis.horizontal,
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      _buildFilterButton("ALL"),
+      _buildFilterButton("BP"),
+      _buildFilterButton("Pulse"),
+      _buildFilterButton("Temp"),
+    ],
+  ),
+),
           const SizedBox(height: 10),
           Expanded(
             child: filteredVitals.isEmpty

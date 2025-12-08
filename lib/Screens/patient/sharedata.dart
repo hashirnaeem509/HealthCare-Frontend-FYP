@@ -3,7 +3,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:healthcare/config_/api_config.dart';
 
 import 'package:healthcare/models/labs_reports.dart';
 
@@ -12,7 +11,7 @@ import 'package:healthcare/models/vital_model.dart';
 import 'package:healthcare/services/LabReportService.dart';
 import 'package:healthcare/services/phrsharingService.dart';
 import 'package:healthcare/services/vital_service.dart';
-import 'package:http/http.dart' as http;
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ShareScreen extends StatefulWidget {
@@ -298,8 +297,16 @@ void share() async {
 Container(
   padding: EdgeInsets.all(12),
   decoration: BoxDecoration(
-      color: const Color.fromARGB(255, 6, 166, 241),
-      borderRadius: BorderRadius.circular(8)),
+      gradient: LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: const [Color(0xFF53B2E8), Colors.white],
+      //  borderRadius: BorderRadius.circular(8)),
+      ),
+    ),
+  // decoration: BoxDecoration(
+  //     color: const Color.fromARGB(255, 6, 166, 241),
+  //     borderRadius: BorderRadius.circular(8)),
   child: Row(
     children: [
       CircleAvatar(
@@ -491,23 +498,28 @@ Container(
                 },
               ),
 
-            SizedBox(height: 12),
+            SizedBox(height: 10),
 
             // Bottom Buttons
-             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text("Back")),
-                ElevatedButton(
-                  onPressed: share,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lightBlue),
-                  child: Text("Share"),
-                ),
-              ],
-            ),
+            // Bottom Buttons
+Padding(
+  padding: const EdgeInsets.only(bottom: 20.0), // add some space from bottom
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text("Back")),
+      ElevatedButton(
+        onPressed: share,
+        style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.lightBlue),
+        child: Text("Share"),
+      ),
+    ],
+  ),
+),
+
           ],
         ),
       ),
