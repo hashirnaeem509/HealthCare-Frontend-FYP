@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientlabreport.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientvital.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientvitalchart.dart';
 
 class PatientDetailScreen extends StatefulWidget {
   final Map<String, dynamic> patient;
 
-  const PatientDetailScreen({Key? key, required this.patient}) : super(key: key);
+  const PatientDetailScreen({super.key, required this.patient});
 
   @override
   State<PatientDetailScreen> createState() => _PatientDetailScreenState();
@@ -34,15 +35,14 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   }
 
   void goLabReports() {
-    // Pass patientId and patient object if needed
-    // Example placeholder screen:
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PlaceholderScreen(title: "Lab Reports", patient: widget.patient),
-      ),
-    );
-  }
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => PatientLabReportsScreen(patient: widget.patient),
+    ),
+  );
+}
+
 
   void goPrescriptions() {
     // Pass patientId and patient object if needed
@@ -204,7 +204,7 @@ class PlaceholderScreen extends StatelessWidget {
   final String title;
   final Map<String, dynamic> patient;
 
-  const PlaceholderScreen({Key? key, required this.title, required this.patient}) : super(key: key);
+  const PlaceholderScreen({super.key, required this.title, required this.patient});
 
   @override
   Widget build(BuildContext context) {

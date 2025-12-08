@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:healthcare/config_/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 class PhrSharingService {
-  // Singleton pattern (optional)
   PhrSharingService._privateConstructor();
   static final PhrSharingService instance = PhrSharingService._privateConstructor();
 
@@ -20,11 +19,12 @@ class PhrSharingService {
       final prefs = await SharedPreferences.getInstance();
       final cookie = prefs.getString('session_cookie');
 
-      // Build payload (match Angular payload)
+      // 🔥 EXACT SAME PAYLOAD AS ANGULAR
       final payload = {
-        "patientId": int.tryParse(patientId) ?? 0,
-        "doctorId": int.tryParse(doctorId) ?? 0,
+        "patientId": int.parse(patientId),
+        "doctorId": int.parse(doctorId),
         "sharedAt": DateTime.now().toIso8601String(),
+
         "vitals": vitals.map((v) {
           return {
             "vitalName": v["vitalName"],
@@ -32,20 +32,19 @@ class PhrSharingService {
             "value": v["value"],
             "date": v["date"],
             "time": v["time"],
-            "isCritical": v["isCritical"] ?? false,
+            "isCritical": v["isCritical"] ?? false
           };
         }).toList(),
+
+        // 🔥 MATCHING ANGULAR EXACTLY  
         "labs": labs.map((l) {
           return {
+            "reportId": l["reportId"],
             "reportName": l["reportName"],
-            "fieldName": l["fieldName"],
-            "value": l["value"],
-            "date": l["date"],
-            "time": l["time"],
-            "isCritical": l["isCritical"] ?? false,
-            "unit": l["unit"] ?? "",
+            "date": l["reportDate"],
+            "time": l["reportTime"] ?? "00:00:00"
           };
-        }).toList(),
+        }).toList()
       };
 
       final response = await http.post(
@@ -57,14 +56,13 @@ class PhrSharingService {
         body: jsonEncode(payload),
       );
 
-      if (response.statusCode == 200) {
-        print("✅ Data shared successfully");
-      } else {
-        print("❌ Failed to share data: ${response.statusCode}");
+      if (response.statusCode != 200) {
         throw Exception("Failed to share data: ${response.statusCode}");
       }
+
+      print("✅ Data shared successfully");
     } catch (e) {
-      print("❌ Share data error: $e");
+      print("❌ Error during share: $e");
       rethrow;
     }
   }

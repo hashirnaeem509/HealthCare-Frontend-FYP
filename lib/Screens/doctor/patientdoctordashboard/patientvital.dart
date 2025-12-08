@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientvitalchart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:healthcare/config_/api_config.dart';
 import 'package:healthcare/Screens/patient/addvitals.dart';
-import 'package:healthcare/Screens/patient/vitalchartScreen.dart';
 
 class Patientvital extends StatefulWidget {
   final int patientId;
@@ -14,13 +14,13 @@ class Patientvital extends StatefulWidget {
   final String patientDOB;
 
   const Patientvital({
-    Key? key,
+    super.key,
     required this.patientId,
     required this.patientName,
     required this.patientImage,
     required this.patientGender,
     required this.patientDOB,
-  }) : super(key: key);
+  });
 
   @override
   State<Patientvital> createState() => _PatientvitalState();
@@ -124,8 +124,11 @@ class _PatientvitalState extends State<Patientvital> {
 
     if (result != null) {
       setState(() {
-        if (index != null) vitals[index] = result;
-        else vitals.add(result);
+        if (index != null) {
+          vitals[index] = result;
+        } else {
+          vitals.add(result);
+        }
       });
       await fetchVitals();
     }
@@ -135,7 +138,7 @@ void goGraph() {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => VitalsChartScreen(
+      builder: (_) => VitalsChartScreens(
         patientId: widget.patientId,      // must match 'patientId'
         patientName: widget.patientName,  // must match 'patientName'
         patientImage: widget.patientImage // must match 'patientImage'

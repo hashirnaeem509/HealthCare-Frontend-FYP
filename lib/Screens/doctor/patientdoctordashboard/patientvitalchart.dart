@@ -6,26 +6,26 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/config_/api_config.dart';
 
-class VitalsChartScreen extends StatefulWidget {
+class VitalsChartScreens extends StatefulWidget {
   final int patientId;
   final String patientName;
   final String patientImage;
 
-  const VitalsChartScreen({
-    Key? key,
+  const VitalsChartScreens({
+    super.key,
     required this.patientId,
     required this.patientName,
     required this.patientImage,
-  }) : super(key: key);
+  });
 
   @override
-  State<VitalsChartScreen> createState() => _VitalsChartScreenState();
+  State<VitalsChartScreens> createState() => _VitalsChartScreensState();
 }
 
 
 
  
-class _VitalsChartScreenState extends State<VitalsChartScreen> {
+class _VitalsChartScreensState extends State<VitalsChartScreens> {
   bool loading = true;
   String errorMsg = '';
   List<Map<String, dynamic>> rawVitals = [];

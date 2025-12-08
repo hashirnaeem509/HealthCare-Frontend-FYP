@@ -10,7 +10,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LabReportService {
   final String baseUrl = '${ApiConfig.baseUrl}/lab/reports';
 
-  
+  /// Fetch full patient lab reports including fields (like Angular)
+Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cookie = prefs.getString('session_cookie');
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/lab/field-values/by-patient/$patientId'),
+    headers: {
+      'Content-Type': 'application/json',
+      if (cookie != null) 'Cookie': cookie,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+
+    // Return as List<Map<String, dynamic>> for flexibility
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+  } else {
+    throw Exception('Failed to load patient reports: ${response.statusCode}');
+  }
+}
+
   Future<List<dynamic>> getLabTests() async {
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');
@@ -141,4 +163,5 @@ class LabReportService {
       throw Exception('Failed to load reports: ${response.statusCode}');
     }
   }
+  
 }

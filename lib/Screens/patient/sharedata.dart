@@ -16,7 +16,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ShareScreen extends StatefulWidget {
-  const ShareScreen({Key? key}) : super(key: key);
+  const ShareScreen({super.key});
 
   @override
   _ShareScreenState createState() => _ShareScreenState();
@@ -152,15 +152,14 @@ bool doctorLoading = true;
       }
     });
   }
-  // Inside your ShareScreen class
 void share() async {
   if (doctor == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Please select a doctor first!")),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Please select a doctor first!")));
     return;
   }
 
+  // --- SELECTED VITALS ---
   final selectedVitalsList = filteredVitals
       .asMap()
       .entries
@@ -168,6 +167,7 @@ void share() async {
       .map((e) => e.value)
       .toList();
 
+  // --- SELECTED LAB REPORTS ---
   final selectedReportsList = filteredReports
       .asMap()
       .entries
@@ -176,13 +176,12 @@ void share() async {
       .toList();
 
   if (selectedVitalsList.isEmpty && selectedReportsList.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Please select at least one item to share.")),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Please select at least one item")));
     return;
   }
 
-  // Convert to payload format
+  // --- VITAL PAYLOAD (same as Angular) ---
   final vitalsPayload = selectedVitalsList.map((v) => {
         "vitalName": v.vitalName,
         "vitalTypeName": v.vitalTypeName,
@@ -192,36 +191,32 @@ void share() async {
         "isCritical": false,
       }).toList();
 
+  // --- LAB PAYLOAD (EXACT Angular format) ---
   final labsPayload = selectedReportsList.map((r) => {
+        "reportId": r.reportId,
         "reportName": r.reportName,
-        "fieldName": "Lab Summary",
-        "value": 0,
-        "date": r.reportDate,
-        "time": r.reportTime,
-        "isCritical": false,
-        "unit": "",
+        "reportDate": r.reportDate,
+        "reportTime": r.reportTime ?? "00:00:00",
       }).toList();
 
   try {
     await PhrSharingService.instance.shareData(
       patientId: patientId!,
-      doctorId: doctor!['doctorId'].toString(),
+      doctorId: doctor!["doctorId"].toString(),
       vitals: vitalsPayload,
       labs: labsPayload,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ Data shared successfully!")),
-    );
-    setState(() {
-      selectedItems.clear(); // reset checkboxes
-    });
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("✅ Data shared successfully!")));
+
+    setState(() => selectedItems.clear());
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ Failed to share data!")),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("❌ Failed to share data")));
   }
 }
+
 
   // void share() {
   //   final selectedVitalsList = filteredVitals
@@ -265,7 +260,7 @@ void share() async {
       }).toList();
 
       filteredReports = reports.where((r) {
-        final rDate = DateTime.tryParse(r!.reportDate);
+        final rDate = DateTime.tryParse(r.reportDate);
         if (rDate == null) return false;
         if (from != null && rDate.isBefore(from)) return false;
         if (to != null && rDate.isAfter(to)) return false;
@@ -446,8 +441,9 @@ Container(
                 itemBuilder: (context, index) {
                   final v = filteredVitals[index];
                   if (activeFilter != 'ALL' &&
-                      normalizeType(v.vitalName) != activeFilter)
+                      normalizeType(v.vitalName) != activeFilter) {
                     return SizedBox.shrink();
+                  }
 
                   return Card(
                     color: const Color.fromARGB(255, 108, 180, 231),

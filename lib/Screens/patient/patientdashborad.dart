@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/patient/qr_code.dart';
-import 'package:healthcare/Screens/patient/sharedata.dart';
 import 'package:healthcare/common_screens/signin.dart';
 import 'package:healthcare/Screens/patient/LabReport.dart';
 import 'package:healthcare/Screens/patient/Vitalhome.dart';
