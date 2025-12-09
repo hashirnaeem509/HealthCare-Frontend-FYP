@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/config_/api_config.dart';
 import 'package:qr_flutter/qr_flutter.dart';
- // Import PatientDetailScreen
+ 
 
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
@@ -218,7 +218,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
               ),
             ),
 
-            // PATIENT LIST
+           
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())

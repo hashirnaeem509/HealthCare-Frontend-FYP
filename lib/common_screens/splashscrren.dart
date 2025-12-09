@@ -14,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // 5 second baad Signin screen pe navigate
+    
     Timer(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
@@ -36,11 +36,11 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Image.asset(
                 "assets/images/logo.png",
                 width:
-                    MediaQuery.of(context).size.width * 0.8, // 60% screen width
+                    MediaQuery.of(context).size.width * 0.8, 
                 height:
                     MediaQuery.of(context).size.height *
-                    0.6, // 30% screen height
-                fit: BoxFit.contain, // maintain aspect ratio
+                    0.6, 
+                fit: BoxFit.contain, 
               ),
             ),
             const SizedBox(height: 20),

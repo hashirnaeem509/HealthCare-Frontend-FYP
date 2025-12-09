@@ -7,7 +7,7 @@ class AuthService {
   //final String baseUrl = 'http://192.168.43.233:8080';
   final String baseUrl = ApiConfig.baseUrl;
 
-  // ---------------- REGISTER ----------------
+
   Future<Map<String, dynamic>> registerUser({
     required String username,
     required String email,
@@ -48,7 +48,7 @@ class AuthService {
     }
   }
 
-  // ---------------- LOGIN ----------------
+
   Future<Map<String, dynamic>> loginUser({
     required String username,
     required String password,
@@ -65,12 +65,12 @@ class AuthService {
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
 
-        // Save Cookie
+        
         final cookie = response.headers['set-cookie'];
         final prefs = await SharedPreferences.getInstance();
         if (cookie != null) await prefs.setString('session_cookie', cookie);
 
-        // Save Role + UserId
+       
         final role = (responseBody['role'] ?? '').toUpperCase();
 final userId = responseBody['userId']?.toString();
 
@@ -78,10 +78,10 @@ if (role.isNotEmpty) await prefs.setString('role', role);
 if (userId != null) await prefs.setString('userId', userId);
 
 if (role == "PATIENT") {
-  await prefs.setString('patientId', userId!); // save as String
+  await prefs.setString('patientId', userId!);
   print("🔹 Patient ID (String): $userId");
 } else if (role == "DOCTOR") {
-  await prefs.setString('doctorId', userId!); // save as String
+  await prefs.setString('doctorId', userId!); 
   print("🔹 Doctor ID (String): $userId");
 }
 
@@ -122,7 +122,7 @@ if (role == "PATIENT") {
     }
   }
 
-  // ---------------- PROFILE CHECK ----------------
+  
   Future<bool> checkProfileExists(String? url) async {
     if (url == null || url.isEmpty) {
       print(" checkProfileExists: URL is empty");

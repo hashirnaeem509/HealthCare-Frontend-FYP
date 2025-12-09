@@ -30,7 +30,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
   //  Patient info load from API
  Future<void> _loadPatientInfo() async {
   final prefs = await SharedPreferences.getInstance();
-  final patientId = prefs.getString('patientId'); // now STRING
+  final patientId = prefs.getString('patientId'); 
   final cookie = prefs.getString('session_cookie');
 
   if (patientId == null || patientId.isEmpty) {
@@ -40,7 +40,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
 
   try {
     final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/patient/$patientId'), // string OK
+      Uri.parse('${ApiConfig.baseUrl}/patient/$patientId'), 
       headers: {
         'Content-Type': 'application/json',
         if (cookie != null) 'Cookie': cookie,
@@ -135,7 +135,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
                     ),
                     const SizedBox(height: 10),
           
-                    // Patient info row
+                    
                     Row(
           children: [
             Container(
@@ -225,10 +225,10 @@ class _PatientdashboradState extends State<Patientdashborad> {
                           shape: const CircleBorder(),
                           backgroundColor: Colors.lightBlue,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(30), // button ka size
+                          padding: const EdgeInsets.all(30), 
                         ),
                         child: const Column(
-                          mainAxisSize: MainAxisSize.min, // content fit karega
+                          mainAxisSize: MainAxisSize.min, 
                           children: [
                             Icon(Icons.monitor_heart, size: 25),
                             SizedBox(height: 3),
@@ -260,7 +260,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
             myIndex = index;
           });
 if (index == 2) {
-          // Navigate to Doctor Screen
+        
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) =>  PatientViewQRCodes()),

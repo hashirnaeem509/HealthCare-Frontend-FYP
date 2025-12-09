@@ -18,7 +18,7 @@ class _RegistrationState extends State<Registration> {
   String? _selectedRole;
 
   final AuthService _authService = AuthService();
-  // Service ka object
+ 
 
   @override
   void dispose() {
@@ -116,7 +116,7 @@ class _RegistrationState extends State<Registration> {
               ),
               const SizedBox(height: 20),
 
-              // Email
+              
               TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -128,7 +128,7 @@ class _RegistrationState extends State<Registration> {
               ),
               const SizedBox(height: 20),
 
-              // Password
+              
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -152,7 +152,7 @@ class _RegistrationState extends State<Registration> {
               ),
               const SizedBox(height: 30),
 
-              // Role Radio Buttons
+             
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -181,7 +181,7 @@ class _RegistrationState extends State<Registration> {
               ),
               const SizedBox(height: 20),
 
-              // Create Button
+           
               ElevatedButton(
                 onPressed: _registerUser,
                 style: ElevatedButton.styleFrom(
@@ -199,7 +199,7 @@ class _RegistrationState extends State<Registration> {
               ),
               const SizedBox(height: 40),
 
-              // Already have account
+             
               GestureDetector(
                 onTap: () {
                   Navigator.pushReplacement(

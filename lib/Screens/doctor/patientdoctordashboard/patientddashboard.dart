@@ -46,7 +46,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
 
 
   void goPrescriptions() {
-    // Pass patientId and patient object if needed
+    
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -145,7 +145,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             ),
           ),
 
-          // Buttons: show when myIndex or showButtons is true
+         
           if (showButtons)
             Padding(
               padding: const EdgeInsets.only(top: 550),
@@ -215,14 +215,14 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         onTap: (index) {
           setState(() {
             myIndex = index;
-            // Show buttons when any index clicked (like your dashboard)
+            
             showButtons = index == 1;
           });
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.health_and_safety), label: 'EHR'),
-          BottomNavigationBarItem(icon: Icon(Icons.graphic_eq), label: 'Graph'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Patient'),
         ],
       ),
     );

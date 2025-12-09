@@ -233,8 +233,8 @@ class _VitalsChartScreensState extends State<VitalsChartScreens> {
     Expanded(
   child: LineChart(
     LineChartData(
-      minY: 40, // Pulse rate minimum (adjust if needed)
-      maxY: 200, // Pulse rate maximum (adjust if needed)
+      // minY: 40, 
+      // maxY: 200, 
       gridData: FlGridData(show: true),
       borderData: FlBorderData(show: true),
       titlesData: FlTitlesData(
@@ -255,11 +255,11 @@ class _VitalsChartScreensState extends State<VitalsChartScreens> {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 20, // Step for pulse rate labels
+
             reservedSize: 40,
             getTitlesWidget: (value, meta) {
               return Text(
-                value.toInt().toString(), // Display integer pulse rate
+                value.toInt().toString(),
                 style: const TextStyle(fontSize: 12),
               );
             },

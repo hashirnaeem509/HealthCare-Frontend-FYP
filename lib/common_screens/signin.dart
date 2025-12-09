@@ -22,7 +22,7 @@ class _SignInState extends State<SignIn> {
 
   final AuthService _authService = AuthService();
 
-  // ---------------- LOGIN FUNCTION ----------------
+
  Future<void> _loginUser() async {
   final username = _usernameController.text.trim();
   final password = _passwordController.text.trim();
@@ -49,13 +49,13 @@ class _SignInState extends State<SignIn> {
 
       print(" Login Success → Role: $role | UserId: $userId");
 
-      // **************** SAVE ID AS STRING ****************
+   
       final prefs = await SharedPreferences.getInstance();
 
-      // Save ROLE
+      
       await prefs.setString("role", role);
 
-      // Save USER ID (String)
+      
       await prefs.setString("userId", userId);
 
       if (role == "PATIENT") {
@@ -65,7 +65,7 @@ class _SignInState extends State<SignIn> {
         await prefs.setString("doctorId", userId);
         print("Saved doctorId as STRING → $userId");
       }
-      // ***************************************************
+   
 
       final exists = await _authService.checkProfileExists(profileUrl);
 
@@ -100,7 +100,7 @@ class _SignInState extends State<SignIn> {
   }
 }
 
-  // ---------------- SNACKBAR ----------------
+
   void _showSnackBar(String message, {bool isSuccess = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -110,7 +110,7 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  // ---------------- UI ----------------
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,7 +141,6 @@ class _SignInState extends State<SignIn> {
               ),
               const SizedBox(height: 40),
 
-              // Username Field
               TextField(
                 controller: _usernameController,
                 decoration: const InputDecoration(
@@ -152,7 +151,7 @@ class _SignInState extends State<SignIn> {
               ),
               const SizedBox(height: 20),
 
-              // Password Field
+             
               TextField(
                 controller: _passwordController,
                 obscureText: _obscureText,
@@ -171,7 +170,6 @@ class _SignInState extends State<SignIn> {
               ),
               const SizedBox(height: 40),
 
-              // Login Button
               ElevatedButton(
                 onPressed: _isLoading ? null : _loginUser,
                 style: ElevatedButton.styleFrom(
@@ -194,7 +192,7 @@ class _SignInState extends State<SignIn> {
               ),
               const SizedBox(height: 20),
 
-              // Signup Button
+              
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -221,7 +219,7 @@ class _SignInState extends State<SignIn> {
               ),
               const SizedBox(height: 20),
 
-              // Bottom Text
+             
               GestureDetector(
                 onTap: () {
                   Navigator.push(

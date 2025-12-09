@@ -60,7 +60,7 @@ class _PatientvitalState extends State<Patientvital> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['vitals'] as List;
 
-        // Group vitals by type-date-time like Angular
+        
         Map<String, Map<String, dynamic>> grouped = {};
         for (var v in data) {
           String key = "${v['vitalName']}-${v['date']}-${v['time']}";
@@ -112,10 +112,29 @@ class _PatientvitalState extends State<Patientvital> {
     return type;
   }
 
-  List<Map<String, dynamic>> get filteredVitals {
-    if (filter == "ALL") return vitals;
-    return vitals.where((v) => v['type'] == filter).toList();
+List<Map<String, dynamic>> get filteredVitals {
+  List<Map<String, dynamic>> result = vitals;
+
+  // Apply type filter
+  if (filter != "ALL") {
+    result = result.where((v) => v['type'] == filter).toList();
   }
+
+  
+  result = result.where((v) {
+    final values = v['values'] as List;
+    
+    return values.any((val) =>
+        val['typeName'].toString().toLowerCase() != 'celsius');
+  }).toList();
+
+  return result;
+}
+
+  // List<Map<String, dynamic>> get filteredVitals {
+  //   if (filter == "ALL") return vitals;
+  //   return vitals.where((v) => v['type'] == filter).toList();
+  // }
 
   Future<void> _openAddVitalDialog({Map<String, dynamic>? existing, int? index}) async {
     final result = await showDialog<Map<String, dynamic>>(
@@ -140,9 +159,9 @@ void goGraph() {
     context,
     MaterialPageRoute(
       builder: (_) => VitalsChartScreens(
-        patientId: widget.patientId,      // must match 'patientId'
-        patientName: widget.patientName,  // must match 'patientName'
-        patientImage: widget.patientImage // must match 'patientImage'
+        patientId: widget.patientId,      
+        patientName: widget.patientName,  
+        patientImage: widget.patientImage 
       ),
     ),
   );
@@ -175,7 +194,7 @@ void goGraph() {
               ? Center(child: Text(errorMsg, style: const TextStyle(color: Colors.red)))
               : Column(
                   children: [
-                    // Patient Info
+                    
                     Container(
                       padding: const EdgeInsets.all(12),
                        decoration: const BoxDecoration(
@@ -213,7 +232,7 @@ void goGraph() {
                     ),
                     const SizedBox(height: 10),
 
-                    // Filters
+                    
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -233,7 +252,7 @@ void goGraph() {
                     ),
                     const SizedBox(height: 10),
 
-                    // Vitals List
+                    
                     Expanded(
                       child: filteredVitals.isEmpty
                           ? const Center(child: Text("No Vitals Added Yet"))
@@ -254,15 +273,17 @@ void goGraph() {
                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        for (var val in v['values'])
-                                          Text("${val['typeName']}: ${val['value']}"),
-                                        const SizedBox(height: 4),
-                                        Text("${v['date']} • ${v['time']}",
-                                            style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                                      ],
-                                    ),
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    for (var val in v['values'])
+      if (val['typeName'].toString().toLowerCase() != 'celsius')
+        Text("${val['typeName']}: ${val['value']}"),
+    const SizedBox(height: 4),
+    Text("${v['date']} • ${v['time']}",
+        style: const TextStyle(fontSize: 12, color: Colors.grey)),
+  ],
+),
+
                                     isThreeLine: true,
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,

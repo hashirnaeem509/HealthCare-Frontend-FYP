@@ -7,7 +7,8 @@ class PatientLabReportsScreen extends StatefulWidget {
   const PatientLabReportsScreen({super.key, required this.patient});
 
   @override
-  State<PatientLabReportsScreen> createState() => _PatientLabReportsScreenState();
+  State<PatientLabReportsScreen> createState() =>
+      _PatientLabReportsScreenState();
 }
 
 class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
@@ -23,7 +24,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
     loadLabReports();
   }
 
-  /// Fetch reports like Angular getPatientReports() approach
+  /// Fetch reports and group by reportName + labName
   Future<void> loadLabReports() async {
     setState(() {
       loading = true;
@@ -31,41 +32,64 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
     });
 
     try {
-    final data = await _service.getPatientReports(widget.patient['id'].toString());
-
+      final data = await _service.getPatientReports(
+        widget.patient['id']?.toString() ?? '',
+      );
 
       // Group by reportName + labName
       Map<String, Map<String, dynamic>> grouped = {};
+
       for (var r in data) {
-  String labName = r['labName'] ?? '';
-  String key = "${r['reportName']}-$labName";
+        String labName = r['labName']?.toString() ?? '';
+        String reportName = r['reportName']?.toString() ?? '';
+        String reportKey = "$reportName-$labName";
 
-  if (!grouped.containsKey(key)) {
-    grouped[key] = {
-      "reportName": r['reportName'],
-      "labName": labName,
-      "fields": [],
-    };
-  }
+        if (!grouped.containsKey(reportKey)) {
+          grouped[reportKey] = {
+            "reportName": reportName,
+            "labName": labName,
+            "fields": <Map<String, dynamic>>[],
+            "dates": <Map<String, String>>[],
+          };
+        }
 
-  grouped[key]!['fields'].add({
-    "fieldName": r['fieldName'],
-    "value": r['value'],
-    "unit": r['unit'],
-    "date": r['date'],
-    "time": r['time'],
-  });
-}
+        final report = grouped[reportKey]!;
 
+        // Add unique dates
+        final dateTime = {
+          'date': r['date']?.toString() ?? '',
+          'time': r['time']?.toString() ?? ''
+        };
+        if (!report['dates'].any((d) =>
+            d['date'] == dateTime['date'] && d['time'] == dateTime['time'])) {
+          report['dates'].add(dateTime);
+        }
+
+        // Find or create field
+        final fieldName = r['fieldName']?.toString() ?? '';
+        var field = report['fields'].firstWhere(
+          (f) => f['fieldName'] == fieldName,
+          orElse: () {
+            final newField = {
+              'fieldName': fieldName,
+              'unit': r['unit']?.toString() ?? '',
+              'values': <Map<String, String>>[],
+            };
+            report['fields'].add(newField);
+            return newField;
+          },
+        );
+
+        // Add value
+        field['values'].add({
+          'value': r['value']?.toString() ?? '',
+          'date': r['date']?.toString() ?? '',
+          'time': r['time']?.toString() ?? '',
+        });
+      }
 
       setState(() {
-        reports = grouped.values
-            .map((r) => {
-                  "reportName": r['reportName'],
-                  "labName": r['labName'],
-                  "fields": [...r['fields']],
-                })
-            .toList();
+        reports = grouped.values.toList();
         loading = false;
       });
     } catch (e) {
@@ -78,6 +102,15 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
   void goBack() {
     Navigator.pop(context);
+  }
+
+  String getFieldValue(Map<String, dynamic> field, String date, String time) {
+    final values = field['values'] as List<Map<String, String>>;
+    final val = values.firstWhere(
+      (v) => v['date'] == date && v['time'] == time,
+      orElse: () => {'value': '-'},
+    );
+    return val['value'] ?? '-';
   }
 
   @override
@@ -93,31 +126,37 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : errorMsg.isNotEmpty
-              ? Center(child: Text(errorMsg, style: const TextStyle(color: Colors.red)))
+              ? Center(
+                  child: Text(
+                    errorMsg,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                )
               : ListView(
                   padding: const EdgeInsets.all(8),
                   children: [
                     // Patient Info Header
                     Row(
                       children: [
-                         Container(
-        height: 90,
-        width: 90,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          image: const DecorationImage(
-            image: AssetImage('assets/images/download.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-            ),
+                        Container(
+                          height: 90,
+                          width: 90,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/download.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(patient['fullName'] ?? 'Patient',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
                             Text("DOB: ${patient['dob'] ?? 'N/A'}"),
                             Text("Gender: ${patient['gender'] ?? 'N/A'}"),
                           ],
@@ -128,7 +167,9 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
                     // Lab Reports
                     ...reports.map((report) {
-                      final fields = report['fields'] as List<dynamic>;
+                      final fields = report['fields'] as List<Map<String, dynamic>>;
+                      final dates = report['dates'] as List<Map<String, String>>;
+
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         child: Padding(
@@ -136,42 +177,45 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("${report['reportName']} — ${report['labName']}",
-                                  style: const TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.bold)),
+                              Text(
+                                "${report['reportName']} — ${report['labName']}",
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                               const SizedBox(height: 8),
-                             SingleChildScrollView(
-  scrollDirection: Axis.horizontal,
-  child: DataTable(
-    headingRowColor: MaterialStateProperty.all(Colors.blue.shade300), // Header background
-    headingTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), // Header text color
-    columns: const [
-      DataColumn(label: Text('Field Name')),
-      DataColumn(label: Text('Value')),
-      DataColumn(label: Text('Unit')),
-      DataColumn(label: Text('Date')),
-      DataColumn(label: Text('Time')),
-    ],
-    rows: fields.map<DataRow>((f) => DataRow(
-      cells: [
-        DataCell(Text(f['fieldName'] ?? '')),
-        DataCell(Text(f['value']?.toString() ?? '')),
-        DataCell(Text(f['unit'] ?? '')),
-        DataCell(Text(f['date'] ?? '')),
-        DataCell(Text(f['time'] ?? '')),
-      ],
-    )).toList(),
-  ),
-),
-
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: DataTable(
+                                  headingRowColor: MaterialStateProperty.all(
+                                      Colors.blue.shade300),
+                                  headingTextStyle: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                  columns: [
+                                    const DataColumn(label: Text('Field Name')),
+                                    ...dates.map((d) => DataColumn(
+                                        label: Text("${d['date']}\n${d['time']}"))),
+                                    const DataColumn(label: Text('Unit')),
+                                  ],
+                                  rows: fields.map<DataRow>((f) {
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(f['fieldName'] ?? '')),
+                                        ...dates.map((d) => DataCell(
+                                            Text(getFieldValue(f, d['date']!, d['time']!)))),
+                                        DataCell(Text(f['unit'] ?? '')),
+                                      ],
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       );
-                    }),
+                    }).toList(),
                   ],
                 ),
     );
   }
-
 }

@@ -120,7 +120,7 @@ bool doctorLoading = true;
   }
 }
 
-  // ---------------- Load Reports ----------------
+ 
   Future<void> loadReports() async {
     if (patientId == null) return;
 
@@ -135,7 +135,7 @@ bool doctorLoading = true;
     }
   }
 
-  // ---------------- Filter Options ----------------
+
   void setFilter(String filter) => setState(() => activeFilter = filter);
 
   void toggleSelectAll(bool? value) {
@@ -190,7 +190,7 @@ void share() async {
         "isCritical": false,
       }).toList();
 
-  // --- LAB PAYLOAD (EXACT Angular format) ---
+
   final labsPayload = selectedReportsList.map((r) => {
         "reportId": r.reportId,
         "reportName": r.reportName,
@@ -268,7 +268,7 @@ void share() async {
     });
   }
 
-  // ---------------- UI ----------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -332,7 +332,7 @@ Container(
 
             SizedBox(height: 12),
 
-            // FILTER CHIPS
+            
             Wrap(
               spacing: 8,
               children: [
@@ -351,7 +351,7 @@ Container(
             ),
             SizedBox(height: 12),
 
-            // DATE FILTERS
+           
             Row(
               children: [
                 Expanded(
@@ -423,7 +423,7 @@ Container(
             ),
             SizedBox(height: 12),
 
-            // SELECT ALL
+            
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -439,7 +439,7 @@ Container(
             ),
             SizedBox(height: 12),
 
-            // VITALS LIST
+            
             if (activeFilter != 'Lab Reports')
               ListView.builder(
                 shrinkWrap: true,
@@ -474,7 +474,7 @@ Container(
                 },
               ),
 
-            // LAB REPORTS
+           
             if (activeFilter == 'ALL' || activeFilter == 'Lab Reports')
               ListView.builder(
                 shrinkWrap: true,
@@ -500,10 +500,9 @@ Container(
 
             SizedBox(height: 10),
 
-            // Bottom Buttons
-            // Bottom Buttons
+            
 Padding(
-  padding: const EdgeInsets.only(bottom: 20.0), // add some space from bottom
+  padding: const EdgeInsets.only(bottom: 20.0), 
   child: Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [

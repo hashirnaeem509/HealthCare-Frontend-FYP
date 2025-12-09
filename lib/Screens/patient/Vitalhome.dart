@@ -74,8 +74,8 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           if (name == "Temperature") {
             if (v['vitalTypeName'] == "Fahrenheit") {
               groupedVitals[key]!["fahrenheit"] = "${v['value']}°F";
-            } else if (v['vitalTypeName'] == "Celsius") {
-              groupedVitals[key]!["celsius"] = "${v['value']}°C";
+            // } else if (v['vitalTypeName'] == "Celsius") {
+            //   groupedVitals[key]!["celsius"] = "${v['value']}°C";
             }
           } else if (name == "Blood Pressure") {
             if (v['vitalTypeName'] == "Systolic") {
@@ -88,20 +88,20 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           }
         }
 
-        //  Sort by date (latest first)
+        
         List<Map<String, dynamic>> sortedVitals = groupedVitals.values.toList();
 
         sortedVitals.sort((a, b) {
           DateTime parseDate(String date, String time) {
             try {
               if (date.contains('-')) {
-                // handle yyyy-MM-dd or dd-MM-yyyy
+               
                 final parts = date.split('-');
                 if (parts.first.length == 4) {
-                  // yyyy-MM-dd
+                  
                   return DateTime.parse("$date ${time.isNotEmpty ? time : '00:00'}");
                 } else {
-                  // dd-MM-yyyy
+                  
                   return DateTime(
                     int.parse(parts[2]),
                     int.parse(parts[1]),
@@ -109,17 +109,17 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                   );
                 }
               } else if (date.contains('/')) {
-                // handle dd/MM/yyyy or MM/dd/yyyy
+                
                 final parts = date.split('/');
                 if (int.parse(parts[0]) > 12) {
-                  // dd/MM/yyyy
+                  
                   return DateTime(
                     int.parse(parts[2]),
                     int.parse(parts[1]),
                     int.parse(parts[0]),
                   );
                 } else {
-                  // MM/dd/yyyy
+                  
                   return DateTime(
                     int.parse(parts[2]),
                     int.parse(parts[0]),
@@ -133,7 +133,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
 
           final dateA = parseDate(a['rawDate'] ?? '', a['rawTime'] ?? '');
           final dateB = parseDate(b['rawDate'] ?? '', b['rawTime'] ?? '');
-          return dateB.compareTo(dateA); // latest first
+          return dateB.compareTo(dateA);
         });
 
         setState(() {
@@ -236,8 +236,8 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                               if (v['type'] == 'Temp') ...[
                                 if ((v['fahrenheit'] ?? '').isNotEmpty)
                                   Text("Fahrenheit: ${v['fahrenheit']}"),
-                                if ((v['celsius'] ?? '').isNotEmpty)
-                                  Text("Celsius: ${v['celsius']}"),
+                                // if ((v['celsius'] ?? '').isNotEmpty)
+                                //   Text("Celsius: ${v['celsius']}"),
                               ] else if (v['type'] == 'BP') ...[
                                 if ((v['systolic'] ?? '').isNotEmpty)
                                   Text("Systolic: ${v['systolic']} mmHg"),

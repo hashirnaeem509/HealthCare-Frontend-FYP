@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LabReportService {
   final String baseUrl = '${ApiConfig.baseUrl}/lab/reports';
 
-  /// Fetch full patient lab reports including fields (like Angular)
+ 
 Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
   final prefs = await SharedPreferences.getInstance();
   final cookie = prefs.getString('session_cookie');
@@ -26,7 +26,7 @@ Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
   if (response.statusCode == 200) {
     final List<dynamic> data = jsonDecode(response.body);
 
-    // Return as List<Map<String, dynamic>> for flexibility
+    
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
   } else {
     throw Exception('Failed to load patient reports: ${response.statusCode}');
@@ -140,8 +140,7 @@ Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
   Future<Map<String, dynamic>> uploadAndExtractOCR(File file, int labTestId) {
     return scanOCRReport(file, labTestId);
   }
-  //   /// Fallback ALT API
-   // ✅ Get patient report summaries
+
   Future<List<PatientReportSummaryDTO>> getPatientReportSummaries(String patientId) async {
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');
@@ -152,7 +151,7 @@ Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
       Uri.parse('$baseUrl/by-patient/$patientId/summary'),
       headers: {
         'Content-Type': 'application/json',
-        if (cookie != null) 'Cookie': cookie, // ✅ must send cookie
+        if (cookie != null) 'Cookie': cookie, 
       },
     );
 

@@ -102,7 +102,7 @@ class _LabReportScreenState extends State<LabReport> {
     }
   }
 
-  // ---------------------- SAVE LOGIC FIXED ------------------------
+ 
   Future<void> saveManualReport() async {
     if (selectedTestId == null) {
       ScaffoldMessenger.of(context)
@@ -110,7 +110,7 @@ class _LabReportScreenState extends State<LabReport> {
       return;
     }
 
-    // 🔥 FIX: patientId can be INT or STRING → convert safely
+    
     final prefs = await SharedPreferences.getInstance();
     final dynamic storedId = prefs.get('patientId');  
     final patientId = storedId?.toString();           
@@ -161,7 +161,7 @@ class _LabReportScreenState extends State<LabReport> {
       );
     }
   }
-  // ---------------------------------------------------------------
+
 
   @override
   Widget build(BuildContext context) {

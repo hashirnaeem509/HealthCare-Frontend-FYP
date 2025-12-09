@@ -19,7 +19,7 @@ class PhrSharingService {
       final prefs = await SharedPreferences.getInstance();
       final cookie = prefs.getString('session_cookie');
 
-      // 🔥 EXACT SAME PAYLOAD AS ANGULAR
+      
       final payload = {
         "patientId": int.parse(patientId),
         "doctorId": int.parse(doctorId),
@@ -36,7 +36,7 @@ class PhrSharingService {
           };
         }).toList(),
 
-        // 🔥 MATCHING ANGULAR EXACTLY  
+       
         "labs": labs.map((l) {
           return {
             "reportId": l["reportId"],

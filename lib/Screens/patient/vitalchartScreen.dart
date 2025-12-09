@@ -130,15 +130,18 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
     final filtered = rawVitals.where((v) {
       final name = (v['vitalName'] ?? '').toString().toLowerCase();
       final type = (v['vitalTypeName'] ?? '').toString().toLowerCase();
+       if (type.contains('celsius')) {
+    return false; 
+  }
 
       if (selectedVital == 'blood pressure') {
         return name.contains('blood pressure') ||
             type.contains('systolic') ||
             type.contains('diastolic');
+       
       } else if (selectedVital == 'temperature') {
-        return name.contains('temp') ||
-            type.contains('celsius') ||
-            type.contains('fahrenheit');
+    return name.contains('temp') || type.contains('fahrenheit');
+      
       } else {
         return name.contains('pulse') || type.contains('bpm');
       }
@@ -243,7 +246,9 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
             Expanded(
               child: LineChart(
                 LineChartData(
-                  minY: 0,
+                  /////
+                  // minY: 70,
+                  // maxY: 120,
                   gridData: FlGridData(show: true),
                   borderData: FlBorderData(show: true),
                   titlesData: FlTitlesData(
@@ -269,13 +274,13 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
                         },
                       ),
                     ),
-                    // FIXED LEFT LABEL OVERLAP
+                    
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
                         interval: 5,
                         reservedSize:
-                            40, //  Added space so Y-axis labels don’t overlap
+                            40, 
                       ),
                     ),
                   ),

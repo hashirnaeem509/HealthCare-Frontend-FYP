@@ -91,7 +91,7 @@ class _PatientViewQRCodesState extends State<PatientViewQRCodes> {
               itemCount: doctors.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.4, // Taller cards to fit content
+                childAspectRatio: 0.4, 
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),

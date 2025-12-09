@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/config_/api_config.dart';
-//int not chnage!!
+
 class AddVitalDialog extends StatefulWidget {
   final Map<String, dynamic>? existingVital;
 
@@ -151,15 +151,15 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
         "date": dateStr,
         "time": timeStr
       });
-      if (celsiusController.text.isNotEmpty) {
-        vitalsPayload.add({
-          "vitalName": "Temperature",
-          "vitalTypeName": "Celsius",
-          "value": celsiusController.text,
-          "date": dateStr,
-          "time": timeStr
-        });
-      }
+      // if (celsiusController.text.isNotEmpty) {
+      //   vitalsPayload.add({
+      //     "vitalName": "Temperature",
+      //     "vitalTypeName": "Celsius",
+      //     "value": celsiusController.text,
+      //     "date": dateStr,
+      //     "time": timeStr
+      //   });
+      // }
     } else if (selectedVital == "Pulse") {
       vitalsPayload.add({
         "vitalName": "Pulse",
@@ -249,11 +249,11 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: "Temperature (°F)"),
               ),
-              TextField(
-                controller: celsiusController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Temperature (°C)"),
-              ),
+              // TextField(
+              //   controller: celsiusController,
+              //   keyboardType: TextInputType.number,
+              //   decoration: const InputDecoration(labelText: "Temperature (°C)"),
+              // ),
             ] else if (selectedVital == "Pulse") ...[
               TextField(
                 controller: pulseController,

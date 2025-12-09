@@ -32,7 +32,7 @@ class _ExtractedDataScreenState extends State<ExtractedDataScreen> {
       final manualFields = await _service.getFieldsByTest(widget.labTestId);
       final manualFieldsSet = <String>{};
 
-      // 🔹 Step 1: Add manual fields + merge OCR data
+    
       for (var field in manualFields) {
         final fieldName = field['fieldName']?.toString().trim();
         if (fieldName == null || fieldName.isEmpty) continue;
