@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/patient/familymemberscreen.dart';
 import 'package:healthcare/Screens/patient/qr_code.dart';
 import 'package:healthcare/common_screens/signin.dart';
 import 'package:healthcare/Screens/patient/LabReport.dart';
@@ -20,6 +21,8 @@ class _PatientdashboradState extends State<Patientdashborad> {
 
   String? fullName;
   String? profileImageUrl;
+  bool isPrimaryProfile = true; // track if active patient is primary (logged-in)
+
 
   @override
   void initState() {
@@ -27,20 +30,19 @@ class _PatientdashboradState extends State<Patientdashborad> {
     _loadPatientInfo();
   }
 
-  //  Patient info load from API
+  // Load active patient info
  Future<void> _loadPatientInfo() async {
   final prefs = await SharedPreferences.getInstance();
-  final patientId = prefs.getString('patientId'); 
-  final cookie = prefs.getString('session_cookie');
 
-  if (patientId == null || patientId.isEmpty) {
-    print(" No patientId found!");
-    return;
-  }
+  final String? mainPatientId = prefs.getString('patientId'); // logged-in patient
+  final String? activePatientId = prefs.getString('activePatientId') ?? mainPatientId;
+  final String? cookie = prefs.getString('session_cookie');
+
+  if (activePatientId == null || activePatientId.isEmpty) return;
 
   try {
     final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/patient/$patientId'), 
+      Uri.parse('${ApiConfig.baseUrl}/patient/$activePatientId'),
       headers: {
         'Content-Type': 'application/json',
         if (cookie != null) 'Cookie': cookie,
@@ -51,18 +53,17 @@ class _PatientdashboradState extends State<Patientdashborad> {
       final data = jsonDecode(response.body);
       setState(() {
         fullName = data['fullName'] ?? "Unknown";
-        profileImageUrl = data['profileImageUrl'];
+        profileImageUrl = ApiConfig.resolveImageUrl(data['profileImageUrl']);
+        isPrimaryProfile = activePatientId == mainPatientId; // compare IDs
       });
-      print(" Patient info loaded: $fullName");
-    } else {
-      print(" Failed to load patient info: ${response.statusCode}");
     }
   } catch (e) {
-    print(" Error loading patient info: $e");
+    print("Error loading patient info: $e");
   }
 }
 
-  //  Logout function
+
+  // Logout
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -74,85 +75,88 @@ class _PatientdashboradState extends State<Patientdashborad> {
     }
   }
 
+  // Navigate to Family screen and wait for selection
+  Future<void> _openFamilyScreen() async {
+    // Open FamilyMemberScreen and wait for switch
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FamilyMemberScreen()),
+    );
+    // After returning, reload active patient info
+    _loadPatientInfo();
+  }
+
+  // Navigate to Lab Report
+  void _goLabReport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LabReport()),
+    );
+  }
+
+  // Navigate to Vitals
+  void _goVital() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const VitalHomeScreen()),
+    );
+  }
+
+  // Navigate to Doctor / QR
+  void _goShareData() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PatientViewQRCodes()),
+    );
+  }
+
+  Future<void> _switchBackToPrimary() async {
+  final prefs = await SharedPreferences.getInstance();
+  final mainPatientId = prefs.getString('patientId');
+  if (mainPatientId == null) return;
+
+  await prefs.setString('activePatientId', mainPatientId);
+  _loadPatientInfo(); // reload main patient info
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        colors: [Color(0xFF53B2E8), Colors.white],
-      ),
-    ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [Color(0xFF53B2E8), Colors.white],
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Stack(
             children: [
               Container(
                 decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        colors: [Color(0xFF53B2E8), Colors.white],
-      ),
-    ),
-                height: 165,
-              // width: MediaQuery.of(context).size.width,
-               width: double.infinity,
-              //  color: const Color.fromARGB(255, 133, 202, 234),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Color(0xFF53B2E8), Colors.white],
+                  ),
+                ),
+                height: 180,
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Row with title + logout
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              "Patient Dashboard",
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.logout,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          tooltip: "Logout",
-                          onPressed: _logout,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-          
-                    
-                    Row(
-          children: [
-            Container(
-        height: 90,
-        width: 90,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          image: const DecorationImage(
-            image: AssetImage('assets/images/download.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-            ),
-            const SizedBox(width: 10),
-        
-            Expanded(       // <-- FIX ADDED
+                       Expanded(
+  child: Row(
+    children: [
+      Flexible(
         child: Text(
           fullName != null ? "Welcome, $fullName" : "Welcome",
           maxLines: 2,
@@ -164,15 +168,73 @@ class _PatientdashboradState extends State<Patientdashborad> {
             decorationColor: Colors.white,
           ),
         ),
-            ),
-          ],
-        )
-        
+      ),
+      if (!isPrimaryProfile)
+        TextButton(
+          onPressed: _switchBackToPrimary,
+          child: const Text(
+            "Switch Back",
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ),
+    ],
+  ),
+),
+ IconButton(
+                          icon: const Icon(
+                            Icons.logout,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          tooltip: "Logout",
+                          onPressed: _logout,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          height: 90,
+                          width: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            image: profileImageUrl != null
+                                ? DecorationImage(
+                                    image: NetworkImage(profileImageUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : const DecorationImage(
+                                    image:
+                                        AssetImage('assets/images/download.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            fullName != null
+                                ? "Welcome, $fullName"
+                                : "Welcome",
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
                   ],
                 ),
               ),
-          
-              //  Buttons
+
+              // PHR Buttons
               if (myIndex == 1)
                 Padding(
                   padding: const EdgeInsets.only(top: 500),
@@ -180,22 +242,15 @@ class _PatientdashboradState extends State<Patientdashborad> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LabReport(),
-                            ),
-                          );
-                        },
+                        onPressed: _goLabReport,
                         style: ElevatedButton.styleFrom(
                           shape: const CircleBorder(),
                           backgroundColor: Colors.lightBlue,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.all(30),
-          
-                        ),child: const Column(
-                          mainAxisSize: MainAxisSize.min, // content fit karega
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.note_add, size: 25),
                             SizedBox(height: 3),
@@ -209,31 +264,49 @@ class _PatientdashboradState extends State<Patientdashborad> {
                             ),
                           ],
                         ),
-                        
+
                       ),
                       const SizedBox(width: 5),
                       ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const VitalHomeScreen(),
-                            ),
-                          );
-                        },
+                        onPressed: _goVital,
                         style: ElevatedButton.styleFrom(
                           shape: const CircleBorder(),
                           backgroundColor: Colors.lightBlue,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(30), 
+                          padding: const EdgeInsets.all(30),
                         ),
                         child: const Column(
-                          mainAxisSize: MainAxisSize.min, 
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.monitor_heart, size: 25),
                             SizedBox(height: 3),
                             Text(
                               'Vitals Sign',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      ElevatedButton(
+                        onPressed: _openFamilyScreen,
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor: Colors.lightBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(30),
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.family_restroom, size: 25),
+                            SizedBox(height: 3),
+                            Text(
+                              'Family',
                               style: TextStyle(
                                 fontSize: 8,
                                 fontWeight: FontWeight.bold,
@@ -259,23 +332,19 @@ class _PatientdashboradState extends State<Patientdashborad> {
           setState(() {
             myIndex = index;
           });
-if (index == 2) {
-        
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) =>  PatientViewQRCodes()),
-          );
-        }
-      },
 
-
-        
+          if (index == 2) {
+            _openFamilyScreen();
+          } else if (index == 3) {
+            _goShareData();
+          }
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services),
-            label: 'PHR',
-          ),
+              icon: Icon(Icons.medical_services), label: 'PHR'),
+        //  BottomNavigationBarItem(
+          //    icon: Icon(Icons.family_restroom), label: 'Family'),
           BottomNavigationBarItem(icon: Icon(Icons.person_2), label: 'Doctor'),
         ],
       ),

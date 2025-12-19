@@ -35,7 +35,7 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
      // final patientId = prefs.getInt('patientId');
-      final patientId = prefs.getString('patientId');
+      final patientId = prefs.getString('activePatientId');
       final cookie = prefs.getString('session_cookie');
 
       if (patientId == null) {
@@ -280,7 +280,7 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
                         showTitles: true,
                         interval: 5,
                         reservedSize:
-                            40, 
+                            40, //  Added space so Y-axis labels don’t overlap
                       ),
                     ),
                   ),

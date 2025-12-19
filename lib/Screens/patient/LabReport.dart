@@ -112,7 +112,7 @@ class _LabReportScreenState extends State<LabReport> {
 
     
     final prefs = await SharedPreferences.getInstance();
-    final dynamic storedId = prefs.get('patientId');  
+    final dynamic storedId = prefs.get('activePatientId');  //active
     final patientId = storedId?.toString();           
 
     final now = DateTime.now();

@@ -50,7 +50,7 @@ class _AddVitalDialogState extends State<AddVitalDialog> {
 
   Future<void> _loadPatientIdAndFetchInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString('patientId');//string
+    final id = prefs.getString('activePatientId');//string
     
     
     if (id != null ) {

@@ -13,6 +13,7 @@ class _RegistrationState extends State<Registration> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _cnicController=TextEditingController();
 
   bool _obscurePassword = true;
   String? _selectedRole;
@@ -25,6 +26,7 @@ class _RegistrationState extends State<Registration> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+     _cnicController.dispose();
     super.dispose();
   }
 
@@ -32,10 +34,13 @@ class _RegistrationState extends State<Registration> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final cnic = _cnicController.text.trim();
+
 
     // Input validation
     if (name.isEmpty ||
         email.isEmpty ||
+         cnic.isEmpty ||
         password.isEmpty ||
         _selectedRole == null) {
       _showSnackBar('Please fill all fields and select a role');
@@ -57,6 +62,7 @@ class _RegistrationState extends State<Registration> {
       email: email,
       password: password,
       role: _selectedRole!,
+      cnic: cnic,
     );
 
     if (response['success']) {
@@ -127,6 +133,18 @@ class _RegistrationState extends State<Registration> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
+
+              TextField(
+                controller: _cnicController,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.card_membership),
+                  hintText: 'Enter Cnic',
+                  border: UnderlineInputBorder(),
+                ),
+                 keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 20),
+
 
               
               TextField(

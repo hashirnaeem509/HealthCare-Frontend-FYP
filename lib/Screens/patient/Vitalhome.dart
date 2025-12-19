@@ -27,7 +27,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
   Future<void> _fetchVitalsFromApi() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final patientId = prefs.getString('patientId');//string
+      final patientId = prefs.getString('activePatientId');//string
       final cookie = prefs.getString('session_cookie');
 
       if (patientId == null) return;
@@ -119,7 +119,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                     int.parse(parts[0]),
                   );
                 } else {
-                  
+                  // MM/dd/yyyy
                   return DateTime(
                     int.parse(parts[2]),
                     int.parse(parts[0]),
@@ -133,7 +133,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
 
           final dateA = parseDate(a['rawDate'] ?? '', a['rawTime'] ?? '');
           final dateB = parseDate(b['rawDate'] ?? '', b['rawTime'] ?? '');
-          return dateB.compareTo(dateA);
+          return dateB.compareTo(dateA); // latest first
         });
 
         setState(() {

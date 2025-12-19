@@ -13,6 +13,7 @@ class AuthService {
     required String email,
     required String password,
     required String role,
+    required String cnic,
   }) async {
     final String apiUrl = '$baseUrl/auth/register';
 
@@ -21,6 +22,7 @@ class AuthService {
       'email': email,
       'password': password,
       'role': role.toUpperCase(),
+      'cnic': cnic,
     };
 
     try {
@@ -76,6 +78,7 @@ final userId = responseBody['userId']?.toString();
 
 if (role.isNotEmpty) await prefs.setString('role', role);
 if (userId != null) await prefs.setString('userId', userId);
+if (userId != null) await prefs.setString('activePatientId', userId);
 
 if (role == "PATIENT") {
   await prefs.setString('patientId', userId!);

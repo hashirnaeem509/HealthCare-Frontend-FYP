@@ -24,7 +24,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
     loadLabReports();
   }
 
-  /// Fetch reports and group by reportName + labName
+ 
   Future<void> loadLabReports() async {
     setState(() {
       loading = true;
@@ -36,7 +36,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
         widget.patient['id']?.toString() ?? '',
       );
 
-      // Group by reportName + labName
+
       Map<String, Map<String, dynamic>> grouped = {};
 
       for (var r in data) {
@@ -55,7 +55,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
         final report = grouped[reportKey]!;
 
-        // Add unique dates
+        
         final dateTime = {
           'date': r['date']?.toString() ?? '',
           'time': r['time']?.toString() ?? ''
@@ -65,7 +65,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
           report['dates'].add(dateTime);
         }
 
-        // Find or create field
+      
         final fieldName = r['fieldName']?.toString() ?? '';
         var field = report['fields'].firstWhere(
           (f) => f['fieldName'] == fieldName,
@@ -80,7 +80,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
           },
         );
 
-        // Add value
+        
         field['values'].add({
           'value': r['value']?.toString() ?? '',
           'date': r['date']?.toString() ?? '',
@@ -186,7 +186,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: DataTable(
-                                  headingRowColor: MaterialStateProperty.all(
+                                  headingRowColor: WidgetStateProperty.all(
                                       Colors.blue.shade300),
                                   headingTextStyle: const TextStyle(
                                       color: Colors.white,
@@ -213,9 +213,10 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
     );
   }
+
 }

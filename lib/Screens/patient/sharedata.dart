@@ -73,11 +73,11 @@ bool doctorLoading = true;
   }
 }
 
-  // ---------------- Load patientId safely ----------------
+ 
   Future<void> _loadPatient() async {
     final prefs = await SharedPreferences.getInstance();
 
-    /// ✔ Read patientId as STRING
+    
     patientId = prefs.getString("patientId");
 
     if (patientId == null || patientId!.isEmpty) {
@@ -87,7 +87,7 @@ bool doctorLoading = true;
 
     print("✔ Loaded patientId = $patientId");
 
-    // Ensure session cookie exists (optional but safe)
+
     final cookie = prefs.getString('session_cookie');
     if (cookie == null) {
       print(" Session cookie missing! Please login again.");
@@ -99,7 +99,6 @@ bool doctorLoading = true;
     await loadReports();
   }
 
-  // ---------------- Load Vitals ----------------
   Future<void> loadVitals() async {
   if (patientId == null || patientId!.isEmpty) {
     print(" patientId is NULL or EMPTY");
@@ -158,7 +157,7 @@ void share() async {
     return;
   }
 
-  // --- SELECTED VITALS ---
+
   final selectedVitalsList = filteredVitals
       .asMap()
       .entries
@@ -166,7 +165,7 @@ void share() async {
       .map((e) => e.value)
       .toList();
 
-  // --- SELECTED LAB REPORTS ---
+ 
   final selectedReportsList = filteredReports
       .asMap()
       .entries
@@ -180,7 +179,7 @@ void share() async {
     return;
   }
 
-  // --- VITAL PAYLOAD (same as Angular) ---
+  
   final vitalsPayload = selectedVitalsList.map((v) => {
         "vitalName": v.vitalName,
         "vitalTypeName": v.vitalTypeName,

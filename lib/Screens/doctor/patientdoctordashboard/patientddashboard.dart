@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/doctor/doctorPrescription.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientlabreport.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientvital.dart';
 
@@ -50,7 +52,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PlaceholderScreen(title: "Prescriptions", patient: widget.patient),
+        builder: (context) => DoctorPatientPrescriptionScreen( patient: widget.patient),
       ),
     );
   }
