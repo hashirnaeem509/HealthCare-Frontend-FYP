@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/patient/familymemberscreen.dart';
+import 'package:healthcare/Screens/patient/patient_disease.dart';
 import 'package:healthcare/Screens/patient/qr_code.dart';
 import 'package:healthcare/common_screens/signin.dart';
 import 'package:healthcare/Screens/patient/LabReport.dart';
@@ -86,6 +87,10 @@ class _PatientdashboradState extends State<Patientdashborad> {
     _loadPatientInfo();
   }
 
+  Future<void> _openDiseaseScreen() async{
+
+    await Navigator.push(context, MaterialPageRoute(builder: (context)=> const PatientDisease()),);
+  }
   // Navigate to Lab Report
   void _goLabReport() {
     Navigator.push(
@@ -238,6 +243,9 @@ class _PatientdashboradState extends State<Patientdashborad> {
               if (myIndex == 1)
                 Padding(
                   padding: const EdgeInsets.only(top: 500),
+                  
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -253,7 +261,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.note_add, size: 25),
-                            SizedBox(height: 3),
+                            SizedBox(height: 2),
                             Text(
                               'Lab Reports',
                               style: TextStyle(
@@ -266,7 +274,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
                         ),
 
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _goVital,
                         style: ElevatedButton.styleFrom(
@@ -279,7 +287,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.monitor_heart, size: 25),
-                            SizedBox(height: 3),
+                            SizedBox(height: 2),
                             Text(
                               'Vitals Sign',
                               style: TextStyle(
@@ -291,7 +299,7 @@ class _PatientdashboradState extends State<Patientdashborad> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _openFamilyScreen,
                         style: ElevatedButton.styleFrom(
@@ -304,9 +312,34 @@ class _PatientdashboradState extends State<Patientdashborad> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.family_restroom, size: 25),
-                            SizedBox(height: 3),
+                            SizedBox(height: 7),
                             Text(
                               'Family',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                       const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: _openDiseaseScreen,
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor: Colors.lightBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(30),
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.sick, size: 25),
+                            SizedBox(height: 3),
+                            Text(
+                              'Disease',
                               style: TextStyle(
                                 fontSize: 8,
                                 fontWeight: FontWeight.bold,
@@ -319,10 +352,13 @@ class _PatientdashboradState extends State<Patientdashborad> {
                     ],
                   ),
                 ),
+                ),
             ],
+          
           ),
         ),
       ),
+    
 
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.lightBlue,
@@ -334,9 +370,10 @@ class _PatientdashboradState extends State<Patientdashborad> {
           });
 
           if (index == 2) {
-            _openFamilyScreen();
-          } else if (index == 3) {
             _goShareData();
+            //_openFamilyScreen();
+          } else if (index == 3) {
+           _openFamilyScreen();
           }
         },
         items: const [

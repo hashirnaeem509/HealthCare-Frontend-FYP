@@ -80,7 +80,24 @@ class _PatientViewQRCodesState extends State<PatientViewQRCodes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Available Doctors")),
+      // scanner ke liye package
+
+// AppBar ko replace karein:
+appBar: AppBar(
+  title: Text("Available Doctors"),
+  actions: [
+    IconButton(
+      icon: Icon(Icons.qr_code_scanner, color: Colors.blue),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => PatientViewQRCodes()),
+        );
+      },
+    ),
+  ],
+),
+
      body: loading
     ? Center(child: CircularProgressIndicator())
     : doctors.isEmpty
