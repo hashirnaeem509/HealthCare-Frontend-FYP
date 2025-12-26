@@ -2,6 +2,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:healthcare/config_/api_config.dart';
+import 'package:http_parser/http_parser.dart';
+
 
 import 'package:healthcare/models/labs_reports.dart';
 import 'package:http/http.dart' as http;
@@ -103,6 +105,33 @@ Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
       );
     }
   }
+Future<bool> checkCritical({
+  required int patientId,
+  required int fieldId,
+  required double value,
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cookie = prefs.getString('session_cookie');
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/check-critical'),
+    headers: {
+      'Content-Type': 'application/json',
+      if (cookie != null) 'Cookie': cookie,
+    },
+    body: jsonEncode({
+      'patientId': patientId,
+      'fieldId': fieldId,
+      'value': value,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body) as bool;
+  } else {
+    throw Exception('Critical check failed');
+  }
+}
 
   
   Future<Map<String, dynamic>> scanOCRReport(File file, int labTestId) async {
@@ -162,5 +191,47 @@ Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
       throw Exception('Failed to load reports: ${response.statusCode}');
     }
   }
+Future<String> saveManualReportWithImage(
+  Map<String, dynamic> reportData,
+  File? image,
+) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cookie = prefs.getString('session_cookie');
+
+  final uri = Uri.parse('$baseUrl/manual');
+  final request = http.MultipartRequest('POST', uri);
+
+  if (cookie != null) {
+    request.headers['Cookie'] = cookie;
+  }
+
+  // ✅ SEND JSON AS application/json PART (VERY IMPORTANT)
+  request.files.add(
+    http.MultipartFile.fromString(
+      'data',
+      jsonEncode(reportData),
+      contentType: MediaType('application', 'json'),
+    ),
+  );
+
+  // ✅ OPTIONAL IMAGE
+  if (image != null && await image.exists()) {
+    request.files.add(
+      await http.MultipartFile.fromPath('file', image.path),
+    );
+  }
+
+  final streamedResponse = await request.send();
+  final response = await http.Response.fromStream(streamedResponse);
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    return response.body;
+  } else {
+    throw Exception(
+      'Save failed: ${response.statusCode} → ${response.body}',
+    );
+  }
+}
+
   
 }
