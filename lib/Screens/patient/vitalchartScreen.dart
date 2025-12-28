@@ -21,7 +21,8 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
   List<String> vitalOptions = ['blood pressure', 'temperature', 'pulse'];
 
   String patientName = '';
-  String patientImage = '';
+  //String patientImage = '';
+  String? profileImageUrl = '';
   
 
 
@@ -56,8 +57,15 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
 
       if (patientRes.statusCode == 200) {
         final pData = jsonDecode(patientRes.body);
+        setState(() {
+          
+      
         patientName = pData['fullName'] ?? '';
-        patientImage = pData['profileImageUrl'] ?? '';
+       // patientImage = pData['profileImageUrl'] ?? '';
+       profileImageUrl = ApiConfig.resolveImageUrl(pData['profileImageUrl']);
+      
+
+        });
       }
 
       final vitalsRes = await http.get(
@@ -203,15 +211,17 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        image:
-                            //profileImageUrl != null &&
-                             //   profileImageUrl!.isNotEmpty
-                             DecorationImage(
-                                image: AssetImage('assets/images/download.png'),
-                                fit: BoxFit.cover,
-                              )
-                            
-                      ),
+                       // ignore: unnecessary_null_comparison
+                        image: profileImageUrl != null && profileImageUrl!.isNotEmpty
+        ? DecorationImage(
+            image: NetworkImage(profileImageUrl!),
+            fit: BoxFit.cover,
+          )
+        : const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+                          ),
                     ),
                 
                 const SizedBox(width: 12),

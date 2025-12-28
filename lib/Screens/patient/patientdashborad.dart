@@ -24,13 +24,78 @@ class _PatientdashboradState extends State<Patientdashborad> {
   String? profileImageUrl;
   bool isPrimaryProfile = true; // track if active patient is primary (logged-in)
 
+    // ✅ Notifications
+  List<Map<String, dynamic>> notifications = [];
+  int notificationCount = 0;
+  bool showNotifications = false;
+
 
   @override
   void initState() {
     super.initState();
     _loadPatientInfo();
+    _loadNotificationsPeriodically();
   }
 
+void toggleNotifications() {
+    setState(() {
+      showNotifications = !showNotifications;
+    });
+  }
+
+   void openNotification(Map<String, dynamic> n) {
+    final patientId = _getActivePatientId();
+    if (patientId != null) {
+      // Navigate to prescription or relevant page
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PatientViewQRCodes(), // example
+        ),
+      );
+    }
+  }
+
+    Future<String?> _getActivePatientId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('activePatientId');
+  }
+
+ // ✅ Load notifications from API
+  Future<void> _loadNotifications() async {
+    final patientId = await _getActivePatientId();
+    if (patientId == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/prescriptions/$patientId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          notifications = data.cast<Map<String, dynamic>>();
+          notificationCount = notifications.length;
+        });
+      } else {
+        print("Failed to load notifications: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching notifications: $e");
+    }
+  }
+
+  void _loadNotificationsPeriodically() {
+    // Initial fetch
+    _loadNotifications();
+    // Auto refresh every 10 sec
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        _loadNotificationsPeriodically();
+      }
+    });
+  }
   // Load active patient info
  Future<void> _loadPatientInfo() async {
   final prefs = await SharedPreferences.getInstance();
@@ -184,7 +249,35 @@ class _PatientdashboradState extends State<Patientdashborad> {
         ),
     ],
   ),
-),
+),Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.notifications,
+                              color: Colors.blueGrey,
+                              size: 28,
+                            ),
+                            onPressed: toggleNotifications,
+                          ),
+                          if (notificationCount > 0)
+                            Positioned(
+                              right: 6,
+                              top: 6,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  notificationCount.toString(),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 12),
+                                ),
+                              ),
+                            )
+                        ],
+                      ),
  IconButton(
                           icon: const Icon(
                             Icons.logout,

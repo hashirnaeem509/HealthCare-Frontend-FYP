@@ -4,7 +4,7 @@ import 'package:healthcare/services/LabReportService.dart';
 class PatientLabReportsScreen extends StatefulWidget {
   final Map<String, dynamic> patient;
 
-  const PatientLabReportsScreen({super.key, required this.patient});
+  const PatientLabReportsScreen({super.key, required this.patient, required String reportId, required String patientId});
 
   @override
   State<PatientLabReportsScreen> createState() =>
@@ -24,7 +24,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
     loadLabReports();
   }
 
- 
+
   Future<void> loadLabReports() async {
     setState(() {
       loading = true;
@@ -55,7 +55,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
         final report = grouped[reportKey]!;
 
-        
+
         final dateTime = {
           'date': r['date']?.toString() ?? '',
           'time': r['time']?.toString() ?? ''
@@ -65,7 +65,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
           report['dates'].add(dateTime);
         }
 
-      
+
         final fieldName = r['fieldName']?.toString() ?? '';
         var field = report['fields'].firstWhere(
           (f) => f['fieldName'] == fieldName,
@@ -73,19 +73,37 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
             final newField = {
               'fieldName': fieldName,
               'unit': r['unit']?.toString() ?? '',
-              'values': <Map<String, String>>[],
+              'values': <Map<String, dynamic>>[],
             };
             report['fields'].add(newField);
             return newField;
           },
         );
 
-        
-        field['values'].add({
+        field['values'].add(<String, dynamic>{
           'value': r['value']?.toString() ?? '',
           'date': r['date']?.toString() ?? '',
           'time': r['time']?.toString() ?? '',
+          'isCritical': r['critical'] == true,
         });
+
+
+        for (var report in grouped.values) {
+      (report['dates'] as List<Map<String, String>>).sort((a, b) {
+        final dtA = DateTime.parse("${a['date']} ${a['time']}");
+        final dtB = DateTime.parse("${b['date']} ${b['time']}");
+        return dtB.compareTo(dtA); // DESCENDING order
+      });
+
+      // Also sort field values according to date/time
+      for (var field in report['fields']) {
+        (field['values'] as List<Map<String, dynamic>>).sort((a, b) {
+          final dtA = DateTime.parse("${a['date']} ${a['time']}");
+          final dtB = DateTime.parse("${b['date']} ${b['time']}");
+          return dtB.compareTo(dtA);
+        });
+      }
+    }
       }
 
       setState(() {
@@ -105,12 +123,21 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
   }
 
   String getFieldValue(Map<String, dynamic> field, String date, String time) {
-    final values = field['values'] as List<Map<String, String>>;
+    final values = (field['values'] as List<dynamic>).cast<Map<String, dynamic>>();
     final val = values.firstWhere(
       (v) => v['date'] == date && v['time'] == time,
-      orElse: () => {'value': '-'},
+      orElse: () => {'value': '-', 'isCritical': false},
     );
-    return val['value'] ?? '-';
+    return val['value']?.toString() ?? '-';
+  }
+
+  bool isCriticalValue(Map<String, dynamic> field, String date, String time) {
+    final values = (field['values'] as List<dynamic>).cast<Map<String, dynamic>>();
+    final val = values.firstWhere(
+      (v) => v['date'] == date && v['time'] == time,
+      orElse: () => {'isCritical': false},
+    );
+    return val['isCritical'] == true;
   }
 
   @override
@@ -186,7 +213,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: DataTable(
-                                  headingRowColor: WidgetStateProperty.all(
+                                  headingRowColor: MaterialStateProperty.all(
                                       Colors.blue.shade300),
                                   headingTextStyle: const TextStyle(
                                       color: Colors.white,
@@ -201,8 +228,19 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                                     return DataRow(
                                       cells: [
                                         DataCell(Text(f['fieldName'] ?? '')),
-                                        ...dates.map((d) => DataCell(
-                                            Text(getFieldValue(f, d['date']!, d['time']!)))),
+                                        ...dates.map((d) {
+                                          final val = getFieldValue(f, d['date']!, d['time']!);
+                                          final isCritical = isCriticalValue(f, d['date']!, d['time']!);
+                                          return DataCell(
+                                            Text(
+                                              val,
+                                              style: TextStyle(
+                                                color: isCritical ? Colors.red : Colors.black,
+                                                fontWeight: isCritical ? FontWeight.bold : FontWeight.normal,
+                                              ),
+                                            ),
+                                          );
+                                        }),
                                         DataCell(Text(f['unit'] ?? '')),
                                       ],
                                     );

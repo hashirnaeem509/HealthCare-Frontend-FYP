@@ -1,15 +1,15 @@
  import 'dart:io';
 
 class ApiConfig {
-  static const String baseUrl = 'http://192.168.0.108:8080';  // <— correct
+  static const String baseUrl = 'http://10.43.185.148:8080';  // <— correct
 
   static String get uploadBaseUrl {
     if (Platform.isAndroid) {
-      return "http://192.168.0.108:8080";  
+      return "http://10.43.185.148:8080";  
     } else if (Platform.isWindows) {
       return "http://localhost:8080";
     } else {
-      return "http://192.168.0.108:8080";  
+      return "http://10.43.185.148:8080";  
     }
   }
 
@@ -17,7 +17,7 @@ class ApiConfig {
   static String resolveImageUrl(String imageUrl) {
     
     if (imageUrl.contains("10.0.2.2")) {
-      return imageUrl.replaceFirst("10.0.2.2", "192.168.0.108");
+      return imageUrl.replaceFirst("10.0.2.2", "10.43.185.148");
     } else {
       return imageUrl;
     }

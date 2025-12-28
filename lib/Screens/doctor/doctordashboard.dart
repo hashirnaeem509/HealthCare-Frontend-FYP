@@ -21,6 +21,8 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   List<dynamic> patients = [];
   bool isLoading = true;
   int myIndex = 0;
+List<String> diseases = [];
+bool loadingDiseases = true;
 
   @override
   void initState() {
@@ -178,9 +180,19 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          image: const DecorationImage(
+          image: doctor.isNotEmpty &&
+            doctor['profileImageUrl'] != null &&
+            doctor['profileImageUrl'].toString().isNotEmpty
+        ? DecorationImage(
+            image: NetworkImage(
+              ApiConfig.resolveImageUrl(doctor['profileImageUrl']),
+            ),
+            fit: BoxFit.cover,
+          )
+        : const DecorationImage(
             image: AssetImage('assets/images/download.png'),
             fit: BoxFit.cover,
+          
           ),
         ),
             ),
@@ -217,51 +229,77 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                 ],
               ),
             ),
+Expanded(
+  child: isLoading
+      ? const Center(child: CircularProgressIndicator())
+      : ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: patients.length,
+          itemBuilder: (context, index) {
+            final p = patients[index];
 
-           
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: patients.length,
-                      itemBuilder: (context, index) {
-                        final p = patients[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 3,
-                          child: ListTile(
-                            leading: const CircleAvatar(
-                              backgroundColor: Colors.lightBlue,
-                              child: Icon(Icons.person, color: Colors.white),
-                            ),
-                            title: Text("Patient: ${p['fullName']}"),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("DOB: ${p['dob']}"),
-                                Text("Gender: ${p['gender']}"),
-                                Text(
-                                  "Diseases: ${(p['diseases'] as List).isEmpty ? "None" : (p['diseases'] as List).join(', ')}",
-                                ),
-                              ],
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => PatientDetailScreen(patient: p),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-            ),
+            // ✅ Angular jaisa disease handling:
+            final List<String> diseases = [];
+            if (p['diseases'] != null) {
+              if (p['diseases'] is List) {
+                for (var d in p['diseases']) {
+                  // Agar string array ho
+                  if (d is String) diseases.add(d);
+                  // Agar object array ho: { "name": "Diabetes" }
+                  else if (d is Map && d.containsKey('name')) diseases.add(d['name']);
+                }
+              }
+            }
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 3,
+              child: ListTile(
+                leading: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: Colors.grey.shade200,
+                  backgroundImage:
+                      p['profileImageUrl'] != null && p['profileImageUrl'].toString().isNotEmpty
+                          ? NetworkImage(ApiConfig.resolveImageUrl(p['profileImageUrl']))
+                          : const AssetImage('assets/images/download.png') as ImageProvider,
+                ),
+                title: Text(
+                  "Patient: ${p['fullName'] ?? 'Unknown'}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("DOB: ${p['dob'] ?? '-'}"),
+                      Text("Gender: ${p['gender'] ?? '-'}"),
+                      Text(
+                        "Diseases: ${diseases.isEmpty ? 'None' : diseases.join(', ')}",
+                        style: TextStyle(
+                          color: diseases.isEmpty ? Colors.grey : Colors.redAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => PatientDetailScreen(patient: p)),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+),
+
+
+
           ],
         ),
       ),

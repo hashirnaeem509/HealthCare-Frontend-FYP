@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/doctor/doctorPrescription.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientlabreport.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientvital.dart';
+import 'package:healthcare/config_/api_config.dart';
 
 
 class PatientDetailScreen extends StatefulWidget {
@@ -41,7 +42,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => PatientLabReportsScreen(patient: widget.patient),
+      builder: (context) => PatientLabReportsScreen(patient: widget.patient, reportId: '', patientId: '',),
     ),
   );
 }
@@ -100,17 +101,26 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/download.png'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
+                   Container(
+  width: 60,
+  height: 60,
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    image: patient['profileImageUrl'] != null &&
+            patient['profileImageUrl'].toString().isNotEmpty
+        ? DecorationImage(
+            image: NetworkImage(
+              ApiConfig.resolveImageUrl(patient['profileImageUrl']),
+            ),
+            fit: BoxFit.cover,
+          )
+        : const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+  ),
+),
+
                     const SizedBox(width: 10),
                     Text(
                       patient['fullName'] ?? 'Welcome',
