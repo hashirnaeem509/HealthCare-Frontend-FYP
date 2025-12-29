@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/patient/mobile_scanner.dart';
 import 'package:healthcare/Screens/patient/sharedata.dart';
 import 'package:healthcare/config_/api_config.dart';
 import 'package:http/http.dart' as http;
@@ -91,7 +92,7 @@ appBar: AppBar(
       onPressed: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => PatientViewQRCodes()),
+          MaterialPageRoute(builder: (context) => QRScannerPage()),
         );
       },
     ),

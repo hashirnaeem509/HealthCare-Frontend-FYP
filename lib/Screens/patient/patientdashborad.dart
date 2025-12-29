@@ -45,16 +45,14 @@ void toggleNotifications() {
 
    void openNotification(Map<String, dynamic> n) {
     final patientId = _getActivePatientId();
-    if (patientId != null) {
-      // Navigate to prescription or relevant page
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PatientViewQRCodes(), // example
-        ),
-      );
+    // Navigate to prescription or relevant page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PatientViewQRCodes(), // example
+      ),
+    );
     }
-  }
 
     Future<String?> _getActivePatientId() async {
     final prefs = await SharedPreferences.getInstance();

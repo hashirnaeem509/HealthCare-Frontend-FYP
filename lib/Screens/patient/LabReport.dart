@@ -14,7 +14,7 @@ class LabReport extends StatefulWidget {
 class _LabReportScreenState extends State<LabReport> {
   final LabReportService _service = LabReportService();
 // Track which fields are critical
-Map<int, bool> _criticalFields = {};
+final Map<int, bool> _criticalFields = {};
 
 
   List<dynamic> tests = [];
@@ -25,7 +25,7 @@ Map<int, bool> _criticalFields = {};
   bool isLoadingFields = false;
 
   // Controllers for fields
-  Map<int, TextEditingController> _controllers = {};
+  final Map<int, TextEditingController> _controllers = {};
   
 
   @override
@@ -181,7 +181,7 @@ else {
           _controllers[field['fieldId']]!.text = lines.join('\n');
         }
 
-        debugPrint("Field '$fieldName' -> Lines: ${lines.length}, Values: ${allValues}");
+        debugPrint("Field '$fieldName' -> Lines: ${lines.length}, Values: $allValues");
       }
 
       setState(() {});

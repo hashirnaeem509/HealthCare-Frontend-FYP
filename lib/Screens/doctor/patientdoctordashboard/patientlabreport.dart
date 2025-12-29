@@ -213,7 +213,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: DataTable(
-                                  headingRowColor: MaterialStateProperty.all(
+                                  headingRowColor: WidgetStateProperty.all(
                                       Colors.blue.shade300),
                                   headingTextStyle: const TextStyle(
                                       color: Colors.white,

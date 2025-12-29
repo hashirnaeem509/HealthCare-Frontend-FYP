@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientlabreport.dart';
 
 import 'package:healthcare/models/labs_reports.dart';
 
@@ -474,28 +475,56 @@ Container(
               ),
 
            
-            if (activeFilter == 'ALL' || activeFilter == 'Lab Reports')
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: filteredReports.length,
-                itemBuilder: (context, index) {
-                  final r = filteredReports[index];
-                  return Card(
-                    color: const Color.fromARGB(255, 86, 127, 197),
-                    child: ListTile(
-                      title: Text(r.reportName),
-                      subtitle: Text("Lab Report"),
-                      leading: Icon(Icons.insert_drive_file),
-                      trailing: Checkbox(
-                        value: selectedItems['lab-$index'] ?? false,
-                        onChanged: (val) =>
-                            setState(() => selectedItems['lab-$index'] = val ?? false),
+           if (activeFilter == 'ALL' || activeFilter == 'Lab Reports')
+  ListView.builder(
+    shrinkWrap: true,
+    physics: NeverScrollableScrollPhysics(),
+    itemCount: filteredReports.length,
+    itemBuilder: (context, index) {
+      final r = filteredReports[index];
+      return Card(
+        color: const Color.fromARGB(255, 86, 127, 197),
+        child: ListTile(
+          title: Text(r.reportName),
+          subtitle: Text("Lab Report"),
+          leading: Icon(Icons.insert_drive_file),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✅ Eye Icon to view report
+              IconButton(
+                icon: Icon(Icons.remove_red_eye, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PatientLabReportsScreen(
+                        patient: {
+                          'id': patientId, 
+                          'fullName': 'Patient Name', // Replace if you have patient fullName
+                          'dob': '', // Optional
+                          'gender': '', // Optional
+                        },
+                        patientId: patientId!,
+                        reportId: r.reportId.toString() ?? '',
                       ),
                     ),
                   );
                 },
               ),
+              // ✅ Checkbox for selection
+              Checkbox(
+                value: selectedItems['lab-$index'] ?? false,
+                onChanged: (val) =>
+                    setState(() => selectedItems['lab-$index'] = val ?? false),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  ),
+
 
             SizedBox(height: 10),
 

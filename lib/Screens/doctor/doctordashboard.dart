@@ -244,9 +244,9 @@ Expanded(
               if (p['diseases'] is List) {
                 for (var d in p['diseases']) {
                   // Agar string array ho
-                  if (d is String) diseases.add(d);
-                  // Agar object array ho: { "name": "Diabetes" }
-                  else if (d is Map && d.containsKey('name')) diseases.add(d['name']);
+                  if (d is String) {
+                    diseases.add(d);
+                  } else if (d is Map && d.containsKey('name')) diseases.add(d['name']);
                 }
               }
             }
