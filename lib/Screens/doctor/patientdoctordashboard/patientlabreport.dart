@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientdocrecommented.dart';
 import 'package:healthcare/services/LabReportService.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PatientLabReportsScreen extends StatefulWidget {
   final Map<String, dynamic> patient;
@@ -29,6 +31,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
     setState(() {
       loading = true;
       errorMsg = '';
+      
     });
 
     try {
@@ -57,8 +60,10 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
 
         final dateTime = {
+          
           'date': r['date']?.toString() ?? '',
-          'time': r['time']?.toString() ?? ''
+          'time': r['time']?.toString() ?? '',
+          'reportId': r['reportId']?.toString() ?? '',
         };
         if (!report['dates'].any((d) =>
             d['date'] == dateTime['date'] && d['time'] == dateTime['time'])) {
@@ -121,6 +126,67 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
   void goBack() {
     Navigator.pop(context);
   }
+   /// ✅ Angular-style navigation
+ /// ✅ Angular-style navigation with doctorId log
+void goToRecommend() async {
+  // 1️⃣ Read doctorId from SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final doctorIdStr = prefs.getString('doctorId');
+  print('🔹 goToRecommend: doctorIdStr from SharedPreferences: $doctorIdStr');
+
+  if (doctorIdStr == null || doctorIdStr.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Doctor not logged in')),
+    );
+    return;
+  }
+
+  final doctorId = int.tryParse(doctorIdStr);
+  if (doctorId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Invalid doctor ID')),
+    );
+    return;
+  }
+  print('🟢 goToRecommend: doctorId parsed as int: $doctorId');
+
+  // 2️⃣ Prepare reports to send
+  final reportsToSend = reports.expand((r) {
+    return (r['dates'] as List).map((d) {
+      final reportId = d['reportId'];
+      if (reportId == null) {
+        print('🔴 Warning: reportId is null for report ${r['reportName']}');
+      }
+      return {
+        'reportId': reportId,
+        'reportName': r['reportName'],
+        'labName': r['labName'],
+        'date': d['date'],
+        'time': d['time'],
+      };
+    });
+  }).toList();
+
+  print('🟢 goToRecommend: Sending ${reportsToSend.length} reports to DoctorRecommendScreen');
+
+  // 3️⃣ Navigate to DoctorRecommendScreen
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => DoctorRecommendScreen(
+        patient: {
+          'id': widget.patient['id'],
+          'fullName': widget.patient['fullName'],
+        },
+        reports: reportsToSend,
+      ),
+    ),
+  );
+}
+
+
+
+  
 
   String getFieldValue(Map<String, dynamic> field, String date, String time) {
     final values = (field['values'] as List<dynamic>).cast<Map<String, dynamic>>();
@@ -146,10 +212,23 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("${patient['fullName']} Lab Reports"),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: goBack),
-        backgroundColor: Colors.lightBlue,
-      ),
+  title: Text("${patient['fullName']} Lab Reports"),
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    onPressed: goBack,
+  ),
+  backgroundColor: Colors.lightBlue,
+ actions: [
+          TextButton.icon(
+            onPressed: goToRecommend, // ✅ FIXED
+            icon: const Icon(Icons.recommend, color: Colors.white),
+            label: const Text(
+              "Recommended",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : errorMsg.isNotEmpty

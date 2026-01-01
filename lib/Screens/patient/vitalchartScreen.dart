@@ -101,25 +101,23 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
     return groups;
   }
 
-  List<FlSpot> _mapVitalsToSpots(List<Map<String, dynamic>> vitals) {
-    final entries =
-        vitals
-            .where((v) => v['value'] != null && v['date'] != null)
-            .map(
-              (v) => MapEntry(
-                DateTime.tryParse(v['date']) ?? DateTime.now(),
-                double.tryParse(v['value'].toString()) ?? 0.0,
-              ),
-            )
-            .toList()
-          ..sort((a, b) => a.key.compareTo(b.key));
+List<Map<String, dynamic>> _mapVitalsToSpotsWithCritical(
+    List<Map<String, dynamic>> vitals) {
+  final entries = vitals
+      .where((v) => v['value'] != null && v['date'] != null)
+      .map(
+        (v) => {
+          "date": DateTime.tryParse(v['date']) ?? DateTime.now(),
+          "value": double.tryParse(v['value'].toString()) ?? 0.0,
+          "isCritical": v['isCritical'] ?? false,
+        },
+      )
+      .toList()
+    ..sort((a, b) => a['date'].compareTo(b['date']));
 
-    return entries
-        .asMap()
-        .entries
-        .map((e) => FlSpot(e.key.toDouble(), e.value.value))
-        .toList();
-  }
+  return entries;
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -176,15 +174,35 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
     final List<LineChartBarData> datasets = [];
 
     grouped.forEach((subtype, list) {
-      datasets.add(
-        LineChartBarData(
-          isCurved: true,
-          spots: _mapVitalsToSpots(list),
-          barWidth: 3,
-          color: colorPalette[colorIndex % colorPalette.length],
-          dotData: FlDotData(show: true),
-        ),
-      );
+   final spotData = _mapVitalsToSpotsWithCritical(list);
+
+datasets.add(
+  LineChartBarData(
+    isCurved: true,
+    spots: spotData
+        .asMap()
+        .entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value['value']))
+        .toList(),
+    barWidth: 3,
+    color: Colors.blueAccent,
+
+    dotData: FlDotData(
+      show: true,
+      getDotPainter: (spot, percent, bar, index) {
+        final isCritical = spotData[index]['isCritical'] == true;
+
+        return FlDotCirclePainter(
+          radius: isCritical ? 6 : 4,
+          color: isCritical ? Colors.red : Colors.blueAccent,
+          strokeWidth: isCritical ? 2 : 0,
+          strokeColor: Colors.redAccent,
+        );
+      },
+    ),
+  ),
+);
+
       colorIndex++;
     });
 
@@ -307,10 +325,18 @@ class _VitalsChartScreenState extends State<VitalsChartScreen> {
                           final type = spot.bar.color == Colors.redAccent
                               ? 'Fahrenheit'
                               : 'Celsius';
-                          return LineTooltipItem(
-                            '$type\n$date\nValue: ${spot.y.toStringAsFixed(1)}',
-                            const TextStyle(color: Colors.white),
-                          );
+                      final isCritical =
+    grouped.values.any((list) => list.any((v) => v['isCritical'] == true));
+
+return LineTooltipItem(
+  '$type\n$date\nValue: ${spot.y.toStringAsFixed(1)}'
+  '${isCritical ? "\n⚠ Critical" : ""}',
+  TextStyle(
+    color: isCritical ? Colors.redAccent : Colors.white,
+    fontWeight: isCritical ? FontWeight.bold : FontWeight.normal,
+  ),
+);
+
                         }).toList();
                       },
                     ),

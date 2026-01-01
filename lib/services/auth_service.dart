@@ -74,7 +74,9 @@ class AuthService {
 
        
         final role = (responseBody['role'] ?? '').toUpperCase();
-final userId = responseBody['userId']?.toString();
+//final userId = responseBody['userId']?.toString();
+final userId = responseBody['userId']?.toString() ?? responseBody['_id']?.toString();
+
 
 if (role.isNotEmpty) await prefs.setString('role', role);
 if (userId != null) await prefs.setString('userId', userId);

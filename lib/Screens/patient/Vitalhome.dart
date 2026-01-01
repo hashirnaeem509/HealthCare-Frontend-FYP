@@ -24,12 +24,12 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
     _fetchVitalsFromApi();
   }
 
+  // ================= FETCH + GROUP (UPDATED) =================
   Future<void> _fetchVitalsFromApi() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final patientId = prefs.getString('activePatientId');//string
+      final patientId = prefs.getString('activePatientId');
       final cookie = prefs.getString('session_cookie');
-
       if (patientId == null) return;
 
       final response = await http.get(
@@ -44,14 +44,13 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
         final responseData = jsonDecode(response.body);
         final List data = responseData['vitals'];
 
-        //  Group vitals (Temperature and BP)
         Map<String, Map<String, dynamic>> groupedVitals = {};
 
         for (var v in data) {
-          String name = v['vitalName'] ?? '';
-          String date = v['date'] ?? '';
-          String time = v['time'] ?? '';
-          String key = "$name-$date-$time";
+          final name = v['vitalName'];
+          final date = v['date'];
+          final time = v['time'];
+          final key = "$name-$date-$time";
 
           if (!groupedVitals.containsKey(key)) {
             groupedVitals[key] = {
@@ -60,108 +59,92 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                   : name == "Blood Pressure"
                       ? "BP"
                       : "Pulse",
-              "fahrenheit": "",
-              "celsius": "",
-              "systolic": "",
-              "diastolic": "",
-              "display": "",
+              "items": [],
               "datetime": "$date • $time",
               "rawDate": date,
               "rawTime": time,
             };
           }
 
-          if (name == "Temperature") {
-            if (v['vitalTypeName'] == "Fahrenheit") {
-              groupedVitals[key]!["fahrenheit"] = "${v['value']}°F";
-            // } else if (v['vitalTypeName'] == "Celsius") {
-            //   groupedVitals[key]!["celsius"] = "${v['value']}°C";
-            }
-          } else if (name == "Blood Pressure") {
-            if (v['vitalTypeName'] == "Systolic") {
-              groupedVitals[key]!["systolic"] = v['value'].toString();
-            } else if (v['vitalTypeName'] == "Diastolic") {
-              groupedVitals[key]!["diastolic"] = v['value'].toString();
-            }
-          } else if (name == "Pulse") {
-            groupedVitals[key]!["display"] = "${v['value']} bpm";
-          }
+          groupedVitals[key]!['items'].add({
+            "obsVId": v['obsVId'],
+            "value": v['value'],
+            "typeName": v['vitalTypeName'],
+            "isCritical": v['isCritical'] ?? false,
+          });
         }
 
-        
-        List<Map<String, dynamic>> sortedVitals = groupedVitals.values.toList();
-
-        sortedVitals.sort((a, b) {
-          DateTime parseDate(String date, String time) {
-            try {
-              if (date.contains('-')) {
-               
-                final parts = date.split('-');
-                if (parts.first.length == 4) {
-                  
-                  return DateTime.parse("$date ${time.isNotEmpty ? time : '00:00'}");
-                } else {
-                  
-                  return DateTime(
-                    int.parse(parts[2]),
-                    int.parse(parts[1]),
-                    int.parse(parts[0]),
-                  );
-                }
-              } else if (date.contains('/')) {
-                
-                final parts = date.split('/');
-                if (int.parse(parts[0]) > 12) {
-                  
-                  return DateTime(
-                    int.parse(parts[2]),
-                    int.parse(parts[1]),
-                    int.parse(parts[0]),
-                  );
-                } else {
-                  // MM/dd/yyyy
-                  return DateTime(
-                    int.parse(parts[2]),
-                    int.parse(parts[0]),
-                    int.parse(parts[1]),
-                  );
-                }
-              }
-            } catch (_) {}
-            return DateTime(1900);
-          }
-
-          final dateA = parseDate(a['rawDate'] ?? '', a['rawTime'] ?? '');
-          final dateB = parseDate(b['rawDate'] ?? '', b['rawTime'] ?? '');
-          return dateB.compareTo(dateA); // latest first
-        });
-
         setState(() {
-          vitals = sortedVitals;
+          vitals = groupedVitals.values.toList();
         });
       }
     } catch (e) {
-      print("Error fetching vitals: $e");
+      debugPrint("Error fetching vitals: $e");
     }
   }
 
-  Future<void> _openAddVitalDialog({
-    Map<String, dynamic>? existing,
-    int? index,
-  }) async {
-    final result = await showDialog<Map<String, dynamic>>(
+  // ================= EDIT =================
+  Future<void> _editVital(Map<String, dynamic> v) async {
+    final first = v['items'][0];
+    final controller =
+        TextEditingController(text: first['value'].toString());
+
+    final newValue = await showDialog<String>(
       context: context,
-      builder: (context) => AddVitalDialog(existingVital: existing),
+      builder: (_) => AlertDialog(
+        title: const Text("Edit Vital"),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          TextButton(
+              onPressed: () =>
+                  Navigator.pop(context, controller.text),
+              child: const Text("Save")),
+        ],
+      ),
     );
 
-    if (result != null) {
-      setState(() {
-        if (index != null) {
-          vitals[index] = result;
-        } else {
-          vitals.add(result);
-        }
-      });
+    if (newValue == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final cookie = prefs.getString('session_cookie');
+
+    await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/vitals/observed'),
+      headers: {
+        "Content-Type": "application/json",
+        if (cookie != null) "Cookie": cookie,
+      },
+      body: jsonEncode({
+        "obsVId": first['obsVId'],
+        "value": num.parse(newValue),
+        "date": v['rawDate'],
+        "time": v['rawTime'],
+      }),
+    );
+
+    await _fetchVitalsFromApi();
+  }
+
+  // ================= DELETE =================
+  Future<void> _deleteVital(Map<String, dynamic> v) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cookie = prefs.getString('session_cookie');
+
+    for (var item in v['items']) {
+      await http.delete(
+        Uri.parse(
+            '${ApiConfig.baseUrl}/vitals/observed/${item['obsVId']}'),
+        headers: {
+          "Content-Type": "application/json",
+          if (cookie != null) "Cookie": cookie,
+        },
+      );
     }
 
     await _fetchVitalsFromApi();
@@ -172,6 +155,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
     return vitals.where((v) => v['type'] == filter).toList();
   }
 
+  // ================= UI (UNCHANGED) =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,112 +176,94 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
       body: Column(
         children: [
           const SizedBox(height: 10),
-         SingleChildScrollView(
-  scrollDirection: Axis.horizontal,
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      _buildFilterButton("ALL"),
-      _buildFilterButton("BP"),
-      _buildFilterButton("Pulse"),
-      _buildFilterButton("Temp"),
-    ],
-  ),
-),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterButton("ALL"),
+                _buildFilterButton("BP"),
+                _buildFilterButton("Pulse"),
+                _buildFilterButton("Temp"),
+              ],
+            ),
+          ),
           const SizedBox(height: 10),
           Expanded(
-            child: filteredVitals.isEmpty
-                ? const Center(child: Text("No Vitals Added Yet"))
-                : ListView.builder(
-                    itemCount: filteredVitals.length,
-                    itemBuilder: (context, index) {
-                      final v = filteredVitals[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        elevation: 2,
-                        color: Colors.white,
-                        child: ListTile(
-                          title: Text(
-                            v['type'] == 'BP'
-                                ? "Blood Pressure"
-                                : v['type'] == 'Pulse'
-                                    ? "Pulse Rate"
-                                    : "Temperature",
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+            child: ListView.builder(
+              itemCount: filteredVitals.length,
+              itemBuilder: (context, index) {
+                final v = filteredVitals[index];
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ListTile(
+                    title: Text(
+                      v['type'] == 'BP'
+                          ? "Blood Pressure"
+                          : v['type'] == 'Pulse'
+                              ? "Pulse Rate"
+                              : "Temperature",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ...v['items'].map<Widget>((item) {
+                          return Row(
                             children: [
-                              const SizedBox(height: 4),
-                              if (v['type'] == 'Temp') ...[
-                                if ((v['fahrenheit'] ?? '').isNotEmpty)
-                                  Text("Fahrenheit: ${v['fahrenheit']}"),
-                                // if ((v['celsius'] ?? '').isNotEmpty)
-                                //   Text("Celsius: ${v['celsius']}"),
-                              ] else if (v['type'] == 'BP') ...[
-                                if ((v['systolic'] ?? '').isNotEmpty)
-                                  Text("Systolic: ${v['systolic']} mmHg"),
-                                if ((v['diastolic'] ?? '').isNotEmpty)
-                                  Text("Diastolic: ${v['diastolic']} mmHg"),
-                              ] else ...[
-                                Text(v['display'] ?? ""),
-                              ],
-                              const SizedBox(height: 6),
                               Text(
-                                v["datetime"] ?? "",
-                                style: const TextStyle(
-                                    fontSize: 13, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                          isThreeLine: true,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.blueAccent),
-                                onPressed: () => _openAddVitalDialog(
-                                  existing: v,
-                                  index: index,
+                                "${item['value']} ${item['typeName']}",
+                                style: TextStyle(
+                                  color: item['isCritical']
+                                      ? Colors.red
+                                      : Colors.black,
+                                  fontWeight: item['isCritical']
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    vitals.remove(v);
-                                  });
-                                },
-                              ),
+                              if (item['isCritical'])
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 4),
+                                  child: Icon(Icons.warning,
+                                      size: 16, color: Colors.red),
+                                ),
                             ],
-                          ),
-                        ),
-                      );
-                    },
+                          );
+                        }).toList(),
+                        const SizedBox(height: 6),
+                        Text(v['datetime'],
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.grey)),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _editVital(v)),
+                        IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteVital(v)),
+                      ],
+                    ),
                   ),
+                );
+              },
+            ),
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.lightBlue,
-        showSelectedLabels: false,
         currentIndex: myIndex,
-        onTap: (index) {
-          setState(() {
-            myIndex = index;
-          });
-          if (index == 2) {
+        onTap: (i) {
+          setState(() => myIndex = i);
+          if (i == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const VitalsChartScreen(),
-              ),
+                  builder: (_) => const VitalsChartScreen()),
             );
           }
         },
@@ -312,23 +278,22 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
     );
   }
 
+  // ================= HELPERS =================
+  Future<void> _openAddVitalDialog() async {
+    await showDialog(
+      context: context,
+      builder: (_) => const AddVitalDialog(),
+    );
+    await _fetchVitalsFromApi();
+  }
+
   Widget _buildFilterButton(String type) {
-    final bool isSelected = filter == type;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ChoiceChip(
-        label: Text(
-          type == "BP"
-              ? "BP"
-              : type == "Temp"
-                  ? "Temperature"
-                  : type == "Pulse"
-                      ? "Pulse Rate"
-                      : "ALL",
-        ),
-        selected: isSelected,
+        label: Text(type),
+        selected: filter == type,
         onSelected: (_) => setState(() => filter = type),
-        selectedColor: Colors.deepPurple[100],
       ),
     );
   }

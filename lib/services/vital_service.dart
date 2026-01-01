@@ -54,4 +54,51 @@ Future<List<VitalRecord>> getVitalsByPatient(String patientId) async {
     final resp = await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload));
     if (resp.statusCode != 200) throw Exception('Failed to submit vitals: ${resp.statusCode}');
   }
+
+  Future<void> deleteObservedVital(int obsVId) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cookie = prefs.getString('session_cookie');
+
+  final resp = await http.delete(
+    Uri.parse('$baseUrl/vitals/observed/$obsVId'),
+    headers: {
+      'Content-Type': 'application/json',
+      if (cookie != null) 'Cookie': cookie,
+    },
+  );
+
+  if (resp.statusCode != 200) {
+    throw Exception('Delete failed');
+  }
+}
+Future<void> updateObservedVital({
+  required int obsVId,
+  required num value,
+  required String date,
+  required String time,
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cookie = prefs.getString('session_cookie');
+
+  final payload = {
+    "obsVId": obsVId,
+    "value": value,
+    "date": date,
+    "time": time,
+  };
+
+  final resp = await http.put(
+    Uri.parse('$baseUrl/vitals/observed'),
+    headers: {
+      'Content-Type': 'application/json',
+      if (cookie != null) 'Cookie': cookie,
+    },
+    body: jsonEncode(payload),
+  );
+
+  if (resp.statusCode != 200) {
+    throw Exception('Update failed');
+  }
+}
+
 }

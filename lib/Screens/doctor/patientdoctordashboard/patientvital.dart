@@ -72,10 +72,12 @@ class _PatientvitalState extends State<Patientvital> {
               "time": v['time'],
             };
           }
-          grouped[key]!["values"].add({
-            "value": v['value'],
-            "typeName": v['vitalTypeName'],
-          });
+     grouped[key]!["values"].add({
+  "value": v['value'],
+  "typeName": v['vitalTypeName'],
+  "isCritical": v['isCritical'] ?? false,
+});
+
         }
 
         List<Map<String, dynamic>> sortedVitals = grouped.values.toList();
@@ -276,8 +278,29 @@ void goGraph() {
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
     for (var val in v['values'])
-      if (val['typeName'].toString().toLowerCase() != 'celsius')
-        Text("${val['typeName']}: ${val['value']}"),
+  if (val['typeName'].toString().toLowerCase() != 'celsius')
+    Row(
+      children: [
+        Text(
+          "${val['typeName']}: ${val['value']}",
+          style: TextStyle(
+            color: val['isCritical'] ? Colors.red : Colors.black,
+            fontWeight:
+                val['isCritical'] ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        if (val['isCritical'])
+          const Padding(
+            padding: EdgeInsets.only(left: 4),
+            child: Icon(
+              Icons.warning,
+              size: 16,
+              color: Colors.red,
+            ),
+          ),
+      ],
+    ),
+
     const SizedBox(height: 4),
     Text("${v['date']} • ${v['time']}",
         style: const TextStyle(fontSize: 12, color: Colors.grey)),
