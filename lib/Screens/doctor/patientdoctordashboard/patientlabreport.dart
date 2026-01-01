@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientdocrecommented.dart';
+import 'package:healthcare/config_/api_config.dart';
 import 'package:healthcare/services/LabReportService.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -248,13 +249,20 @@ void goToRecommend() async {
                           height: 90,
                           width: 90,
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            image: const DecorationImage(
-                              image: AssetImage('assets/images/download.png'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+    shape: BoxShape.circle,
+    image: patient['profileImageUrl'] != null &&
+            patient['profileImageUrl'].toString().isNotEmpty
+        ? DecorationImage(
+            image: NetworkImage(
+              ApiConfig.resolveImageUrl(patient['profileImageUrl']),
+            ),
+            fit: BoxFit.cover,
+          )
+        : const DecorationImage(
+            image: AssetImage('assets/images/download.png'),
+            fit: BoxFit.cover,
+          ),
+  ),
                         ),
                         const SizedBox(width: 12),
                         Column(

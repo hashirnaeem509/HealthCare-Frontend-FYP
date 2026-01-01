@@ -214,12 +214,13 @@ void goGraph() {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          image: const DecorationImage(
-            image: AssetImage('assets/images/download.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-            ),
+           image: DecorationImage(
+      image: widget.patientImage.isNotEmpty
+          ? NetworkImage(ApiConfig.resolveImageUrl(widget.patientImage))
+          : const AssetImage('assets/images/download.png') as ImageProvider,
+      fit: BoxFit.cover,
+    ),
+            ),),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,4 +357,5 @@ void goGraph() {
       builder: (_) => DoctorDashboard()));
     
   }
+
 }

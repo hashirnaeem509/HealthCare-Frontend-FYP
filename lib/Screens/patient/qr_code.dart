@@ -115,6 +115,15 @@ appBar: AppBar(
               ),
               itemBuilder: (context, index) {
                 final doc = doctors[index];
+
+                  ImageProvider profileImage;
+    if (doc["profileImageUrl"] != null &&
+        doc["profileImageUrl"].toString().isNotEmpty &&
+        doc["profileImageUrl"].toString().startsWith("http")) {
+      profileImage = NetworkImage(doc["profileImageUrl"]);
+    } else {
+      profileImage = const AssetImage('assets/images/download.png');
+    }
                 return GestureDetector(
                   onTap: () => selectDoctor(doc),
                   child: Container(
@@ -136,15 +145,13 @@ appBar: AppBar(
                        Container(
   width: 60,
   height: 60,
-  decoration: BoxDecoration(
-    shape: BoxShape.circle,
-    image: DecorationImage(
-      // image: (doc["profileImageUrl"] != null && doc["profileImageUrl"] != "")
-      //     ? NetworkImage(doc["profileImageUrl"])
-      //     : const AssetImage('assets/images/download.png') as ImageProvider,
-      image: const AssetImage('assets/images/download.png'),
+  
 
-      fit: BoxFit.cover,
+    decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: profileImage,
+                  fit: BoxFit.cover,
     ),
   ),
 ),
