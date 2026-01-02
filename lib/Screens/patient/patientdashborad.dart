@@ -37,20 +37,27 @@ class _PatientdashboradState extends State<Patientdashborad> {
   }
 
   // ================= Notifications =================
- Future<void> openNotification(Map<String, dynamic> n) async {
-  print('Notification clicked: $n');
+Future<void> openNotification(Map<String, dynamic> n) async {
   final prefs = await SharedPreferences.getInstance();
+
+  // get active patient id
   final patientIdStr = prefs.getString('activePatientId');
+  if (patientIdStr == null || patientIdStr.isEmpty) {
+    print("❌ activePatientId is null");
+    return;
+  }
 
-  if (patientIdStr == null) return;
-  final patientId = int.tryParse(patientIdStr);
-  if (patientId == null) return;
+  final int? patientId = int.tryParse(patientIdStr);
+  if (patientId == null) {
+    print("❌ patientId parsing failed");
+    return;
+  }
 
-  final doctorId = n['doctorId'] is int
-      ? n['doctorId'] as int
-      : int.tryParse(n['doctorId'].toString());
-
-  if (doctorId == null) return;
+  final int? doctorId = n['doctorId'];
+  if (doctorId == null) {
+    print("❌ doctorId missing in notification");
+    return;
+  }
 
   Navigator.push(
     context,
@@ -278,17 +285,28 @@ class _PatientdashboradState extends State<Patientdashborad> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.notifications),
-                              onPressed: () {
-                                if (notifications.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('No new notifications')),
-                                  );
-                                  return;
-                                }
-                                openNotification(notifications.first);
-                              },
+                             onPressed: () {
+  showModalBottomSheet(
+    context: context,
+    builder: (_) {
+      return ListView.builder(
+        itemCount: notifications.length,
+        itemBuilder: (context, index) {
+          final n = notifications[index];
+          return ListTile(
+            title: Text(n['message'] ?? ''),
+            subtitle: Text(n['timestamp'] ?? ''),
+            onTap: () {
+              Navigator.pop(context);
+              openNotification(n);
+            },
+          );
+        },
+      );
+    },
+  );
+},
+
                             ),
                             if (notificationCount > 0)
                               Positioned(

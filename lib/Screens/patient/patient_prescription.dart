@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:healthcare/config_/api_config.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PatientPrescriptionScreen extends StatefulWidget {
   final int doctorId;
@@ -44,6 +45,19 @@ class _PatientPrescriptionScreenState extends State<PatientPrescriptionScreen> {
   }
 
   Future<void> _loadAll() async {
+    final prefs = await SharedPreferences.getInstance();
+final cookie = prefs.getString('session_cookie');
+
+print("🍪 Loaded cookie in prescription: $cookie");
+
+if (cookie == null || cookie.isEmpty) {
+  setState(() {
+    errorMsg = 'Session expired. Please login again.';
+    loading = false;
+  });
+  return;
+}
+
     setState(() {
       loading = true;
       errorMsg = '';
@@ -53,10 +67,14 @@ class _PatientPrescriptionScreenState extends State<PatientPrescriptionScreen> {
 
     try {
       // ================= PATIENT INFO =================
-      final patientRes = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/patient/${widget.patientId}'),
-        headers: {'Content-Type': 'application/json'},
-      );
+    final patientRes = await http.get(
+  Uri.parse('${ApiConfig.baseUrl}/patient/${widget.patientId}'),
+  headers: {
+    'Content-Type': 'application/json',
+    'Cookie': cookie,
+  },
+);
+
 
       if (patientRes.statusCode == 200) {
         final p = jsonDecode(patientRes.body);
@@ -70,12 +88,23 @@ class _PatientPrescriptionScreenState extends State<PatientPrescriptionScreen> {
       }
 
       // ================= PRESCRIPTION =================
-      final presRes = await http.get(
-        Uri.parse(
-          '${ApiConfig.baseUrl}/prescriptions/details/${widget.doctorId}/${widget.patientId}',
-        ),
-        headers: {'Content-Type': 'application/json'},
-      );
+final presRes = await http.get(
+  Uri.parse(
+    '${ApiConfig.baseUrl}/prescriptions/details/${widget.doctorId}/${widget.patientId}',
+  ),
+  headers: {
+    'Content-Type': 'application/json',
+    'Cookie': cookie,
+  },
+);
+
+print("📄 Prescription status: ${presRes.statusCode}");
+print("📄 Prescription body: ${presRes.body}");
+
+
+
+
+
 
       if (presRes.statusCode == 200) {
         final Map<String, dynamic> prescription = jsonDecode(presRes.body);
