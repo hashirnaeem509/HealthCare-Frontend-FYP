@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientlabreport.dart';
+import 'package:healthcare/Screens/patient/singlelabreport.dart';
 
 import 'package:healthcare/models/labs_reports.dart';
 
@@ -495,20 +496,16 @@ Container(
               IconButton(
                 icon: Icon(Icons.remove_red_eye, color: Colors.white),
                 onPressed: () {
+                   debugPrint("👁 Eye clicked");
+    debugPrint("➡ patientId: $patientId");
+    debugPrint("➡ reportId: ${r.reportId}");
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => PatientLabReportsScreen(
-                        patient: {
-                          'id': patientId, 
-                          'fullName': 'Patient Name', // Replace if you have patient fullName
-                          'dob': '', // Optional
-                          'gender': '', // Optional
-                        },
-                        patientId: patientId!,
-                        reportId: r.reportId.toString() ?? '',
-                      ),
-                    ),
+                   MaterialPageRoute(
+        builder: (_) => SingleLabReportScreen(
+          patientId: patientId!,
+          reportId: r.reportId.toString(),
+        ),),
                   );
                 },
               ),

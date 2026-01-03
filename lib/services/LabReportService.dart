@@ -1,6 +1,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:healthcare/config_/api_config.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -54,6 +55,49 @@ Future<List<Map<String, dynamic>>> getPatientReports(String patientId) async {
       throw Exception('Failed to load lab tests: ${response.statusCode}');
     }
   }
+// Future<Map<String, dynamic>> getSingleLabReport(
+//     String patientId, String reportId) async {
+//   final res = await http.get(
+//     Uri.parse('${ApiConfig.baseUrl}/patient/$patientId/lab-report/$reportId'),
+//     headers: {"Accept": "application/json"},
+//   );
+
+//   if (res.statusCode == 200) {
+//     return json.decode(res.body);
+//   } else {
+//     throw Exception("Failed to load lab report");
+//   }
+// }
+// Future<Map<String, dynamic>> getLabReportById(String reportId) async {
+//   final prefs = await SharedPreferences.getInstance();
+//   final cookie = prefs.getString('session_cookie');
+
+//   final url = '${ApiConfig.baseUrl}/lab-report/$reportId';
+
+//   debugPrint("🌐 GET $url");
+//   debugPrint("🍪 Cookie: $cookie");
+
+//   final res = await http.get(
+//     Uri.parse(url),
+//     headers: {
+//       "Accept": "application/json",
+//       if (cookie != null) "Cookie": cookie,
+//     },
+//   );
+
+//   debugPrint("⬅ Status Code: ${res.statusCode}");
+//   debugPrint("⬅ Body: ${res.body}");
+
+//   if (res.statusCode == 200) {
+//     return jsonDecode(res.body);
+//   } else {
+//     throw Exception(
+//         "API failed: ${res.statusCode} → ${res.body}");
+//   }
+// }
+
+
+
 
  
   Future<List<dynamic>> getFieldsByTest(int testId) async {

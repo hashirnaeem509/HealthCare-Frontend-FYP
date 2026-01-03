@@ -8,7 +8,8 @@ import 'package:healthcare/services/LabReportService.dart';
 
 class ScanReportScreen extends StatefulWidget {
   final int labTestId; 
-  const ScanReportScreen({super.key, required this.labTestId});
+   final String? reportId;
+  const ScanReportScreen({super.key, required this.labTestId,this.reportId});
 
   @override
   State<ScanReportScreen> createState() => _ScanReportScreenState();

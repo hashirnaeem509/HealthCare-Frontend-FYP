@@ -127,7 +127,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
   void goBack() {
     Navigator.pop(context);
   }
-   /// ✅ Angular-style navigation
+  
  /// ✅ Angular-style navigation with doctorId log
 void goToRecommend() async {
   // 1️⃣ Read doctorId from SharedPreferences

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientddashboard.dart';
@@ -6,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/config_/api_config.dart';
 import 'package:qr_flutter/qr_flutter.dart';
- 
 
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
@@ -20,114 +20,173 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   bool doctorLoading = true;
   List<dynamic> patients = [];
   bool isLoading = true;
-  int myIndex = 0;
-List<String> diseases = [];
-bool loadingDiseases = true;
+
+  List<dynamic> notifications = [];
+  int notificationCount = 0;
+  Timer? notificationTimer;
 
   @override
   void initState() {
     super.initState();
     fetchDoctor();
     fetchPatients();
+    fetchNotifications();
+
+    notificationTimer =
+        Timer.periodic(const Duration(seconds: 10), (_) => fetchNotifications());
   }
 
-  Future<void> fetchDoctor() async {
+  @override
+  void dispose() {
+    notificationTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> fetchNotifications() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final doctorId = prefs.getString('doctorId');
       final cookie = prefs.getString('session_cookie');
 
-      if (doctorId == null) {
-        setState(() => doctorLoading = false);
-        return;
-      }
+      if (doctorId == null) return;
 
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/doctor/$doctorId'),
+      final res = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/doctor/$doctorId/notifications'),
         headers: {
           "Accept": "application/json",
           if (cookie != null) "Cookie": cookie,
         },
       );
 
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        final body = json.decode(response.body);
+      if (res.statusCode == 200) {
         setState(() {
-          doctor = body;
-          doctorLoading = false;
+          notifications = json.decode(res.body) ?? [];
+          notificationCount = notifications.length;
         });
-      } else {
-        setState(() => doctorLoading = false);
       }
     } catch (e) {
-      if (!mounted) return;
-      setState(() => doctorLoading = false);
+      debugPrint("Notification error ❌ $e");
+    }
+  }
+
+  Future<void> fetchDoctor() async {
+    final prefs = await SharedPreferences.getInstance();
+    final doctorId = prefs.getString('doctorId');
+    final cookie = prefs.getString('session_cookie');
+
+    if (doctorId == null) return;
+
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/doctor/$doctorId'),
+      headers: {
+        "Accept": "application/json",
+        if (cookie != null) "Cookie": cookie,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        doctor = json.decode(response.body);
+        doctorLoading = false;
+      });
     }
   }
 
   Future<void> fetchPatients() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cookie = prefs.getString('session_cookie');
+    final prefs = await SharedPreferences.getInstance();
+    final cookie = prefs.getString('session_cookie');
 
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/doctor/patients'),
-        headers: {
-          "Accept": "application/json",
-          if (cookie != null) "Cookie": cookie,
-        },
-      );
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/doctor/patients'),
+      headers: {
+        "Accept": "application/json",
+        if (cookie != null) "Cookie": cookie,
+      },
+    );
 
-      if (response.statusCode == 200) {
-        setState(() {
-          patients = json.decode(response.body);
-          isLoading = false;
-        });
-      } else {
-        setState(() => isLoading = false);
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
+    if (response.statusCode == 200) {
+      setState(() {
+        patients = json.decode(response.body);
+        isLoading = false;
+      });
     }
   }
 
-  void _showDoctorQr() {
-    if (doctorLoading || doctor.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Doctor info not loaded")),
-      );
-      return;
-    }
-
-    final idValue = doctor["id"] ?? doctor["_id"] ?? doctor["doctorId"];
-    String qrData = jsonEncode({
-      "doctorId": idValue,
-      "fullName": doctor["fullName"] ?? "",
-      "specialization": doctor["specialization"] ?? "",
-      "profileImageUrl": doctor["profileImageUrl"] ?? "",
-    });
+  void showNotificationDialog() {
+    setState(() => notificationCount = 0);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Doctor QR Code"),
+      builder: (_) => AlertDialog(
+        title: const Text("Notifications"),
         content: SizedBox(
-          width: 250,
-          height: 250,
-          child: QrImageView(
-            data: qrData,
-            version: QrVersions.auto,
-            size: 240,
-          ),
+          width: double.maxFinite,
+          child: notifications.isEmpty
+              ? const Center(child: Text("No notifications"))
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: notifications.length,
+                  itemBuilder: (_, i) {
+                    final n = notifications[i];
+                    return ListTile(
+                      leading: const Icon(Icons.notifications),
+                      title: Text(n['patientName'] ?? ''),
+                      subtitle: Text(n['message'] ?? ''),
+                    );
+                  },
+                ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text("Close"),
-          ),
+          )
         ],
+      ),
+    );
+  }
+
+  Widget notificationBell() {
+    return Stack(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none, size: 30),
+          onPressed: showNotificationDialog,
+        ),
+        if (notificationCount > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                notificationCount.toString(),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showDoctorQr() {
+    final idValue = doctor["id"] ?? doctor["_id"] ?? doctor["doctorId"];
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Doctor QR Code"),
+        content: QrImageView(
+          data: jsonEncode({"doctorId": idValue}),
+          size: 240,
+        ),
       ),
     );
   }
@@ -138,19 +197,14 @@ bool loadingDiseases = true;
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER
             Container(
-              width: double.infinity,
               padding: const EdgeInsets.only(bottom: 16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.lightBlueAccent, Colors.white],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
                 ),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
                   Padding(
@@ -159,165 +213,85 @@ bool loadingDiseases = true;
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
+                          icon: const Icon(Icons.arrow_back),
                           onPressed: () async {
-                            final prefs = await SharedPreferences.getInstance();
+                            final prefs =
+                                await SharedPreferences.getInstance();
                             await prefs.clear();
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const SignIn()),
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SignIn()),
                             );
                           },
-                          icon: const Icon(Icons.arrow_back, size: 30),
-                          color: Colors.black87,
                         ),
-                        IconButton(
-                          onPressed: _showDoctorQr,
-                          icon: const Icon(Icons.qr_code, size: 35),
-                          color: Colors.black87,
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.qr_code),
+                              onPressed: _showDoctorQr,
+                            ),
+                            notificationBell(),
+                          ],
                         ),
-                       Container(
-        height: 90,
-        width: 90,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          image: doctor.isNotEmpty &&
-            doctor['profileImageUrl'] != null &&
-            doctor['profileImageUrl'].toString().isNotEmpty
-        ? DecorationImage(
-            image: NetworkImage(
-              ApiConfig.resolveImageUrl(doctor['profileImageUrl']),
-            ),
-            fit: BoxFit.cover,
-          )
-        : const DecorationImage(
-            image: AssetImage('assets/images/download.png'),
-            fit: BoxFit.cover,
-          
-          ),
-        ),
-            ),
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: doctor['profileImageUrl'] != null
+                              ? NetworkImage(ApiConfig.resolveImageUrl(
+                                  doctor['profileImageUrl']))
+                              : const AssetImage(
+                                      'assets/images/download.png')
+                                  as ImageProvider,
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  Center(
-                    child: Text(
-                      doctorLoading ? "Loading..." : doctor["fullName"] ?? "Doctor",
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: "Search Patients",
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
+                  const SizedBox(height: 12),
+                  Text(
+                    doctor["fullName"] ?? "Doctor",
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
-Expanded(
-  child: isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: patients.length,
-          itemBuilder: (context, index) {
-            final p = patients[index];
-
-            // ✅ Angular jaisa disease handling:
-            final List<String> diseases = [];
-            if (p['diseases'] != null) {
-              if (p['diseases'] is List) {
-                for (var d in p['diseases']) {
-                  // Agar string array ho
-                  if (d is String) {
-                    diseases.add(d);
-                  } else if (d is Map && d.containsKey('name')) diseases.add(d['name']);
-                }
-              }
-            }
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 3,
-              child: ListTile(
-                leading: CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.grey.shade200,
-                  backgroundImage:
-                      p['profileImageUrl'] != null && p['profileImageUrl'].toString().isNotEmpty
-                          ? NetworkImage(ApiConfig.resolveImageUrl(p['profileImageUrl']))
-                          : const AssetImage('assets/images/download.png') as ImageProvider,
-                ),
-                title: Text(
-                  "Patient: ${p['fullName'] ?? 'Unknown'}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("DOB: ${p['dob'] ?? '-'}"),
-                      Text("Gender: ${p['gender'] ?? '-'}"),
-                      Text(
-                        "Diseases: ${diseases.isEmpty ? 'None' : diseases.join(', ')}",
-                        style: TextStyle(
-                          color: diseases.isEmpty ? Colors.grey : Colors.redAccent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => PatientDetailScreen(patient: p)),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-),
-
-
-
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: patients.length,
+                      itemBuilder: (_, i) {
+                        final p = patients[i];
+                        return Card(
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: p['profileImageUrl'] != null
+                                  ? NetworkImage(ApiConfig.resolveImageUrl(
+                                      p['profileImageUrl']))
+                                  : const AssetImage(
+                                          'assets/images/download.png')
+                                      as ImageProvider,
+                            ),
+                            title: Text(p['fullName'] ?? ''),
+                            subtitle: Text(
+                                "DOB: ${p['dob']} | Gender: ${p['gender']}"),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        PatientDetailScreen(patient: p)),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            )
           ],
         ),
       ),
-      // bottomNavigationBar: BottomNavigationBar(
-      //   backgroundColor: Colors.lightBlue,
-      //   showSelectedLabels: false,
-      //   currentIndex: myIndex,
-      //   onTap: (index) {
-      //     setState(() {
-      //       myIndex = index;
-      //     });
-      //   },
-      //   items: const [
-      //     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-      //     BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'EHR'),
-      //     BottomNavigationBarItem(icon: Icon(Icons.person_2), label: 'Doctor'),
-      //   ],
-      // ),
     );
   }
 }

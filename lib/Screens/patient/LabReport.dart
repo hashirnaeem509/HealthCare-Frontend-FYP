@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:healthcare/services/LabReportService.dart';
 import 'package:healthcare/Screens/patient/ScanReport.dart';
@@ -13,9 +14,9 @@ class LabReport extends StatefulWidget {
 
 class _LabReportScreenState extends State<LabReport> {
   final LabReportService _service = LabReportService();
-// Track which fields are critical
-final Map<int, bool> _criticalFields = {};
 
+  // Track which fields are critical
+  final Map<int, bool> _criticalFields = {};
 
   List<dynamic> tests = [];
   List<dynamic> fields = [];
@@ -26,7 +27,7 @@ final Map<int, bool> _criticalFields = {};
 
   // Controllers for fields
   final Map<int, TextEditingController> _controllers = {};
-  
+
 
   @override
   void initState() {
@@ -34,40 +35,39 @@ final Map<int, bool> _criticalFields = {};
     loadTests();
   }
 
-Future<void> checkFieldCritical(int fieldId, String value) async {
-  final prefs = await SharedPreferences.getInstance();
-  final storedId = prefs.get('activePatientId');
-  if (storedId == null) return;
+  Future<void> checkFieldCritical(int fieldId, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedId = prefs.get('activePatientId');
+    if (storedId == null) return;
 
-  final patientId = int.tryParse(storedId.toString());
-  if (patientId == null) return;
+    final patientId = int.tryParse(storedId.toString());
+    if (patientId == null) return;
 
-  // Extract first numeric value from input
-  final match = RegExp(r'\d+(\.\d+)?').firstMatch(value.replaceAll(',', ''));
-  if (match == null) {
-    setState(() => _criticalFields[fieldId] = false);
-    return;
+    // Extract first numeric value
+    final match = RegExp(r'\d+(\.\d+)?').firstMatch(value.replaceAll(',', ''));
+    if (match == null) {
+      setState(() => _criticalFields[fieldId] = false);
+      return;
+    }
+
+    final doubleValue = double.tryParse(match.group(0)!);
+    if (doubleValue == null) {
+      setState(() => _criticalFields[fieldId] = false);
+      return;
+    }
+
+    try {
+      final isCritical = await _service.checkCritical(
+        patientId: patientId,
+        fieldId: fieldId,
+        value: doubleValue,
+      );
+      setState(() => _criticalFields[fieldId] = isCritical);
+      debugPrint("FIELD=$fieldId VALUE=$doubleValue CRITICAL=$isCritical");
+    } catch (e) {
+      debugPrint("Error checking critical: $e");
+    }
   }
-
-  final doubleValue = double.tryParse(match.group(0)!);
-  if (doubleValue == null) {
-    setState(() => _criticalFields[fieldId] = false);
-    return;
-  }
-
-  try {
-    final isCritical = await _service.checkCritical(
-      patientId: patientId,
-      fieldId: fieldId,
-      value: doubleValue,
-    );
-    setState(() => _criticalFields[fieldId] = isCritical);
-    debugPrint("FIELD=$fieldId VALUE=$doubleValue CRITICAL=$isCritical");
-  } catch (e) {
-    debugPrint("Error checking critical: $e");
-  }
-}
-
 
   /// Load all lab tests
   Future<void> loadTests() async {
@@ -134,18 +134,18 @@ Future<void> checkFieldCritical(int fieldId, String value) async {
     if (extractedData != null) {
       debugPrint("OCR data received: $extractedData");
 
-      // Convert to Map<String, dynamic>
+
       final Map<String, dynamic> ocrMap = {};
       (extractedData as Map).forEach((k, v) {
         ocrMap[k.toString()] = v;
       });
 
-      // Populate fields with OCR data
+
       for (var field in fields) {
         final fieldName = field['fieldName'];
         if (fieldName == null) continue;
 
-        // Find matching OCR entries
+
         final matchingEntries = ocrMap.entries.where(
           (e) => e.key.toLowerCase().contains(fieldName.toLowerCase()),
         ).toList();
@@ -158,7 +158,7 @@ Future<void> checkFieldCritical(int fieldId, String value) async {
 
         field['fullRows'] = lines;
 
-        // Extract numeric values (optional, can be removed if not needed)
+
         final allValues = <String>[];
         for (var line in lines) {
           final matches = RegExp(r'(\d+(?:,\d+)?(?:\.\d+)?)').allMatches(line);
@@ -168,20 +168,19 @@ Future<void> checkFieldCritical(int fieldId, String value) async {
         }
 
         field['values'] = allValues;
-       field['value'] = allValues.isNotEmpty ? allValues.first : null;
+        field['value'] = allValues.isNotEmpty ? allValues.first : null;
 
-// Initialize controller
-_controllers[field['fieldId']] = TextEditingController(text: lines.join('\n'));
+        _controllers[field['fieldId']] =
+            TextEditingController(text: lines.join('\n'));
 
-// ✅ Immediately check if OCR value is critical
-if (field['value'] != null) {
-  checkFieldCritical(field['fieldId'], field['value'].toString());
-}
-else {
+        if (field['value'] != null) {
+          checkFieldCritical(field['fieldId'], field['value'].toString());
+        } else {
           _controllers[field['fieldId']]!.text = lines.join('\n');
         }
 
-        debugPrint("Field '$fieldName' -> Lines: ${lines.length}, Values: $allValues");
+        debugPrint(
+            "Field '$fieldName' -> Lines: ${lines.length}, Values: $allValues");
       }
 
       setState(() {});
@@ -193,63 +192,78 @@ else {
   }
 
   /// Save manual report
- Future<void> saveManualReport() async {
-  if (selectedTestId == null) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Select a test first!")));
-    return;
+  Future<void> saveManualReport() async {
+    if (selectedTestId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Select a test first!")));
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final dynamic storedId = prefs.get('activePatientId');
+    final patientId = storedId?.toString();
+
+    final now = DateTime.now();
+    final date = now.toIso8601String().split('T')[0];
+    final time =
+        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
+
+    final payload = {
+      "patientId": patientId,
+      "labTestId": selectedTestId,
+      "reportName": tests.firstWhere(
+        (t) => t["labTestId"] == selectedTestId,
+        orElse: () => {"testName": "Manual Report"},
+      )["testName"],
+      "date": date,
+      "time": time,
+      "fieldValues": fields.where((f) => f["fieldId"] != null).map((f) {
+        return {
+          "fieldId": f["fieldId"],
+          "value": f["value"],
+          "unit": f["unit"] ?? "",
+        };
+      }).toList(),
+    };
+
+    debugPrint("FINAL PAYLOAD =====> $payload");
+
+    try {
+      final responseString =
+          await _service.saveManualReportWithImage(payload, null);
+      final response = jsonDecode(responseString); // ✅ Decode JSON
+      final reportId = response['reportId']; // ✅ Extract reportId safely
+      debugPrint("Saved Response: $response");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Report saved successfully!")),
+      );
+
+      // Clear state
+      setState(() {
+        selectedTestId = null;
+        fields.clear();
+        _controllers.clear();
+      });
+
+      // Navigate to ScanReportScreen to view this report (if reportId exists)
+      if (reportId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ScanReportScreen(
+              labTestId: selectedTestId!,
+              reportId: reportId.toString(),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("Failed to save report: $e");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Failed to save: $e")));
+    }
   }
-
-  final prefs = await SharedPreferences.getInstance();
-  final dynamic storedId = prefs.get('activePatientId');
-  final patientId = storedId?.toString();
-
-  final now = DateTime.now();
-  final date = now.toIso8601String().split('T')[0];
-  final time =
-      "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
-
-  final payload = {
-    "patientId": patientId,
-    "labTestId": selectedTestId,
-    "reportName": tests.firstWhere(
-      (t) => t["labTestId"] == selectedTestId,
-      orElse: () => {"testName": "Manual Report"},
-    )["testName"],
-    "date": date,
-    "time": time,
-    "fieldValues": fields.where((f) => f["fieldId"] != null).map((f) {
-      return {
-        "fieldId": f["fieldId"],
-        "value": f["value"],
-        "unit": f["unit"] ?? "",
-      };
-    }).toList(),
-  };
-
-  debugPrint("FINAL PAYLOAD =====> $payload");
-
-  try {
-    // ✅ Use the multipart method (no file for now)
- final response = await _service.saveManualReportWithImage(payload, null);
-    debugPrint("Saved Response: $response");
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Report saved successfully!")),
-    );
-
-    // Clear state
-    setState(() {
-      selectedTestId = null;
-      fields.clear();
-      _controllers.clear();
-    });
-  } catch (e) {
-    debugPrint("Failed to save report: $e");
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Failed to save: $e")));
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -328,30 +342,35 @@ else {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                              TextFormField(
-  controller: _controllers[field['fieldId']],
-  maxLines: null,
-  decoration: InputDecoration(
-    border: OutlineInputBorder(),
-    labelText: field['fieldName'],
-    filled: true,
-    fillColor: _criticalFields[field['fieldId']] == true 
-        ? Colors.red.withOpacity(0.2) 
-        : Colors.white,
-  ),
-  style: TextStyle(
-    color: _criticalFields[field['fieldId']] == true ? Colors.red : Colors.black,
-    fontWeight: _criticalFields[field['fieldId']] == true ? FontWeight.bold : FontWeight.normal,
-  ),
-  onChanged: (val) {
-    field['fullRows'] = val.split('\n');
-    field['value'] = val;
-    checkFieldCritical(field['fieldId'], val);
-    setState(() {});
-  },
-),
-
-
+                                  TextFormField(
+                                    controller: _controllers[field['fieldId']],
+                                    maxLines: null,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: field['fieldName'],
+                                      filled: true,
+                                      fillColor: _criticalFields[field['fieldId']] ==
+                                              true
+                                          ? Colors.red.withOpacity(0.2)
+                                          : Colors.white,
+                                    ),
+                                    style: TextStyle(
+                                      color: _criticalFields[field['fieldId']] ==
+                                              true
+                                          ? Colors.red
+                                          : Colors.black,
+                                      fontWeight: _criticalFields[field['fieldId']] ==
+                                              true
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                    onChanged: (val) {
+                                      field['fullRows'] = val.split('\n');
+                                      field['value'] = val;
+                                      checkFieldCritical(field['fieldId'], val);
+                                      setState(() {});
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
