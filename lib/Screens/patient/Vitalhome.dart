@@ -24,7 +24,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
     _fetchVitalsFromApi();
   }
 
-  // ================= FETCH + GROUP (UPDATED) =================
+  // ================= FETCH + GROUP =================
   Future<void> _fetchVitalsFromApi() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -83,33 +83,38 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
     }
   }
 
-  // ================= EDIT =================
-  Future<void> _editVital(Map<String, dynamic> v) async {
-    final first = v['items'][0];
+  // ================= EDIT SINGLE ITEM =================
+  Future<void> _editVitalItem(
+    Map<String, dynamic> v,
+    Map<String, dynamic> item,
+  ) async {
     final controller =
-        TextEditingController(text: first['value'].toString());
+        TextEditingController(text: item['value'].toString());
 
     final newValue = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Edit Vital"),
+        title: Text("Edit ${item['typeName']}"),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
+          autofocus: true,
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
           TextButton(
-              onPressed: () =>
-                  Navigator.pop(context, controller.text),
-              child: const Text("Save")),
+            onPressed: () =>
+                Navigator.pop(context, controller.text.trim()),
+            child: const Text("Save"),
+          ),
         ],
       ),
     );
 
-    if (newValue == null) return;
+    if (newValue == null || newValue.isEmpty) return;
 
     final prefs = await SharedPreferences.getInstance();
     final cookie = prefs.getString('session_cookie');
@@ -121,7 +126,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
         if (cookie != null) "Cookie": cookie,
       },
       body: jsonEncode({
-        "obsVId": first['obsVId'],
+        "obsVId": item['obsVId'],
         "value": num.parse(newValue),
         "date": v['rawDate'],
         "time": v['rawTime'],
@@ -155,7 +160,7 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
     return vitals.where((v) => v['type'] == filter).toList();
   }
 
-  // ================= UI (UNCHANGED) =================
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -209,26 +214,29 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ...v['items'].map<Widget>((item) {
-                          return Row(
-                            children: [
-                              Text(
-                                "${item['value']} ${item['typeName']}",
-                                style: TextStyle(
-                                  color: item['isCritical']
-                                      ? Colors.red
-                                      : Colors.black,
-                                  fontWeight: item['isCritical']
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                          return GestureDetector(
+                            onTap: () => _editVitalItem(v, item),
+                            child: Row(
+                              children: [
+                                Text(
+                                  "${item['value']} ${item['typeName']}",
+                                  style: TextStyle(
+                                    color: item['isCritical']
+                                        ? Colors.red
+                                        : Colors.black,
+                                    fontWeight: item['isCritical']
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
                                 ),
-                              ),
-                              if (item['isCritical'])
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 4),
-                                  child: Icon(Icons.warning,
-                                      size: 16, color: Colors.red),
-                                ),
-                            ],
+                                if (item['isCritical'])
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 4),
+                                    child: Icon(Icons.warning,
+                                        size: 16, color: Colors.red),
+                                  ),
+                              ],
+                            ),
                           );
                         }).toList(),
                         const SizedBox(height: 6),
@@ -237,16 +245,9 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                                 fontSize: 13, color: Colors.grey)),
                       ],
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _editVital(v)),
-                        IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteVital(v)),
-                      ],
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteVital(v),
                     ),
                   ),
                 );
