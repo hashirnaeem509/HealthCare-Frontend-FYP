@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/patient/labreportgraph.dart';
 import 'package:healthcare/services/LabReportService.dart';
 import 'package:healthcare/Screens/patient/ScanReport.dart';
 import 'package:healthcare/Screens/patient/patientdashborad.dart';
@@ -27,7 +28,6 @@ class _LabReportScreenState extends State<LabReport> {
 
   // Controllers for fields
   final Map<int, TextEditingController> _controllers = {};
-
 
   @override
   void initState() {
@@ -134,17 +134,14 @@ class _LabReportScreenState extends State<LabReport> {
     if (extractedData != null) {
       debugPrint("OCR data received: $extractedData");
 
-
       final Map<String, dynamic> ocrMap = {};
       (extractedData as Map).forEach((k, v) {
         ocrMap[k.toString()] = v;
       });
 
-
       for (var field in fields) {
         final fieldName = field['fieldName'];
         if (fieldName == null) continue;
-
 
         final matchingEntries = ocrMap.entries.where(
           (e) => e.key.toLowerCase().contains(fieldName.toLowerCase()),
@@ -157,7 +154,6 @@ class _LabReportScreenState extends State<LabReport> {
         }
 
         field['fullRows'] = lines;
-
 
         final allValues = <String>[];
         for (var line in lines) {
@@ -295,6 +291,7 @@ class _LabReportScreenState extends State<LabReport> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  // Dropdown to select test
                   DropdownButtonFormField<int>(
                     decoration: const InputDecoration(
                       labelText: "Select Test",
@@ -312,6 +309,37 @@ class _LabReportScreenState extends State<LabReport> {
                       await loadFieldsForSelectedTest();
                     },
                   ),
+                  const SizedBox(height: 10),
+                  // Show View Graph button if a test is selected
+                  if (selectedTestId != null)
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        final selectedTest = tests.firstWhere(
+                          (t) => t["labTestId"] == selectedTestId,
+                          orElse: () => null,
+                        );
+                        if (selectedTest != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => LabTrendPage(
+                                labTestId: selectedTestId!,
+                                labTestName: selectedTest["testName"],
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.show_chart),
+                      label: const Text("View Graph"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        minimumSize: const Size.fromHeight(40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 20),
                   if (isLoadingFields)
                     const Center(child: CircularProgressIndicator())
@@ -349,7 +377,8 @@ class _LabReportScreenState extends State<LabReport> {
                                       border: OutlineInputBorder(),
                                       labelText: field['fieldName'],
                                       filled: true,
-                                      fillColor: _criticalFields[field['fieldId']] ==
+                                      fillColor: _criticalFields[
+                                                  field['fieldId']] ==
                                               true
                                           ? Colors.red.withOpacity(0.2)
                                           : Colors.white,

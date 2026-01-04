@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare/Screens/patient/patientdashborad.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -71,8 +72,49 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
             "value": v['value'],
             "typeName": v['vitalTypeName'],
             "isCritical": v['isCritical'] ?? false,
+            "isAveraged": false, // default false for normal values
           });
         }
+        Map<String, List<double>> typeValues = {};
+
+// Collect values per type
+for (var v in data) {
+  final type = v['vitalName'];
+  typeValues.putIfAbsent(type, () => []);
+  typeValues[type]!.add(v['value']);
+}
+
+// Add averaged items
+typeValues.forEach((type, values) {
+  if (values.length > 1) { // Only average if more than 1 value
+    final avg = values.reduce((a, b) => a + b) / values.length;
+
+    final date = "2026-01-04"; // you can choose latest date
+    final time = "12:00";      // placeholder time
+    final key = "$type-$date-$time-avg";
+
+    groupedVitals[key] = {
+      "type": type == "Temperature"
+          ? "Temp"
+          : type == "Blood Pressure"
+              ? "BP"
+              : "Pulse",
+      "items": [
+        {
+          "obsVId": null, // averaged item has no obsVId
+          "value": avg,
+          "typeName": type,
+          "isCritical": false,
+          "isAveraged": true, // mark as averaged
+        }
+      ],
+      "datetime": "$date • $time",
+      "rawDate": date,
+      "rawTime": time,
+    };
+  }
+});
+
 
         setState(() {
           vitals = groupedVitals.values.toList();
@@ -215,20 +257,38 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
                       children: [
                         ...v['items'].map<Widget>((item) {
                           return GestureDetector(
-                            onTap: () => _editVitalItem(v, item),
+                        onTap: () {
+  if (item['isAveraged'] == true) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Cannot edit averaged value"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    return;
+  }
+  _editVitalItem(v, item);
+},
+
                             child: Row(
                               children: [
-                                Text(
-                                  "${item['value']} ${item['typeName']}",
-                                  style: TextStyle(
-                                    color: item['isCritical']
-                                        ? Colors.red
-                                        : Colors.black,
-                                    fontWeight: item['isCritical']
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
+                               Text(
+  "${item['value']} ${item['typeName']}",
+  style: TextStyle(
+    color: item['isCritical']
+        ? Colors.red
+        : (item['isAveraged'] == true ? Colors.grey : Colors.black),
+    fontWeight: item['isCritical'] || item['isAveraged'] == true
+        ? FontWeight.bold
+        : FontWeight.normal,
+  ),
+),
+if (item['isAveraged'])
+  const Padding(
+    padding: EdgeInsets.only(left: 4),
+    child: Icon(Icons.calculate, size: 16, color: Colors.blue),
+  ),
+
                                 if (item['isCritical'])
                                   const Padding(
                                     padding: EdgeInsets.only(left: 4),
@@ -256,18 +316,26 @@ class _VitalHomeScreenState extends State<VitalHomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: myIndex,
-        onTap: (i) {
-          setState(() => myIndex = i);
-          if (i == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const VitalsChartScreen()),
-            );
-          }
-        },
+     bottomNavigationBar: BottomNavigationBar(
+  currentIndex: myIndex,
+  onTap: (i) async {
+    setState(() => myIndex = 1);
+
+    if (i == 0) {
+      // Home screen par navigation
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const Patientdashborad()),
+      );
+    } else if (i == 2) {
+      // Graph screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const VitalsChartScreen()),
+      );
+    }
+  },
+       backgroundColor: Colors.lightBlue,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(

@@ -254,21 +254,21 @@ Future<void> openNotification(Map<String, dynamic> n) async {
                         Expanded(
                           child: Row(
                             children: [
-                              Flexible(
-                                child: Text(
-                                  fullName != null
-                                      ? "Welcome, $fullName"
-                                      : "Welcome",
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: Colors.white,
-                                  ),
-                                ),
-                              ),
+                            //  Flexible(
+                                // child: Text(
+                                //   fullName != null
+                                //       ? "Welcome, $fullName"
+                                //       : "Welcome",
+                                //   maxLines: 2,
+                                //   overflow: TextOverflow.ellipsis,
+                                //   style: const TextStyle(
+                                //     fontSize: 20,
+                                //     color: Color.fromARGB(255, 32, 25, 25),
+                                //     decoration: TextDecoration.underline,
+                                //     decorationColor: Color.fromARGB(255, 16, 13, 13),
+                                //   ),
+                                // ),
+                              //),
                               if (!isPrimaryProfile)
                                 TextButton(
                                   onPressed: _switchBackToPrimary,
@@ -281,52 +281,52 @@ Future<void> openNotification(Map<String, dynamic> n) async {
                             ],
                           ),
                         ),
-                        Stack(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.notifications),
-                             onPressed: () {
-  showModalBottomSheet(
-    context: context,
-    builder: (_) {
-      return ListView.builder(
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final n = notifications[index];
-          return ListTile(
-            title: Text(n['message'] ?? ''),
-            subtitle: Text(n['timestamp'] ?? ''),
-            onTap: () {
-              Navigator.pop(context);
-              openNotification(n);
-            },
-          );
-        },
-      );
-    },
-  );
-},
+//                         Stack(
+//                           children: [
+//                             IconButton(
+//                               icon: const Icon(Icons.notifications),
+//                              onPressed: () {
+//   showModalBottomSheet(
+//     context: context,
+//     builder: (_) {
+//       return ListView.builder(
+//         itemCount: notifications.length,
+//         itemBuilder: (context, index) {
+//           final n = notifications[index];
+//           return ListTile(
+//             title: Text(n['message'] ?? ''),
+//             subtitle: Text(n['timestamp'] ?? ''),
+//             onTap: () {
+//               Navigator.pop(context);
+//               openNotification(n);
+//             },
+//           );
+//         },
+//       );
+//     },
+//   );
+// },
 
-                            ),
-                            if (notificationCount > 0)
-                              Positioned(
-                                right: 6,
-                                top: 6,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    notificationCount.toString(),
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 12),
-                                  ),
-                                ),
-                              )
-                          ],
-                        ),
+//                             ),
+//                             if (notificationCount > 0)
+//                               Positioned(
+//                                 right: 6,
+//                                 top: 6,
+//                                 child: Container(
+//                                   padding: const EdgeInsets.all(4),
+//                                   decoration: const BoxDecoration(
+//                                     color: Colors.red,
+//                                     shape: BoxShape.circle,
+//                                   ),
+//                                   child: Text(
+//                                     notificationCount.toString(),
+//                                     style: const TextStyle(
+//                                         color: Colors.white, fontSize: 12),
+//                                   ),
+//                                 ),
+//                               )
+//                           ],
+//                         ),
                         IconButton(
                           icon: const Icon(
                             Icons.logout,
@@ -342,24 +342,21 @@ Future<void> openNotification(Map<String, dynamic> n) async {
                     // Profile row
                     Row(
                       children: [
-                        Container(
-                          height: 90,
-                          width: 90,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            image: profileImageUrl != null
-                                ? DecorationImage(
-                                    image: NetworkImage(profileImageUrl!),
-                                    fit: BoxFit.cover,
-                                  )
-                                : const DecorationImage(
-                                    image: AssetImage(
-                                        'assets/images/download.png'),
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
-                        ),
+                       Container(
+  height: 90,
+  width: 90,
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    color: Colors.white,
+    image: DecorationImage(
+      image: profileImageUrl != null
+          ? NetworkImage(profileImageUrl!)
+          : const AssetImage('assets/images/download.png') as ImageProvider,
+      fit: BoxFit.cover,
+    ),
+  ),
+),
+
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
