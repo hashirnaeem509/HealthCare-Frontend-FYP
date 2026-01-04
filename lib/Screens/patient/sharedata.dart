@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientlabreport.dart';
+//import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientlabreport.dart';
 import 'package:healthcare/Screens/patient/singlelabreport.dart';
 
 import 'package:healthcare/models/labs_reports.dart';
@@ -80,7 +80,7 @@ bool doctorLoading = true;
     final prefs = await SharedPreferences.getInstance();
 
     
-    patientId = prefs.getString("patientId");
+    patientId = prefs.getString("activePatientId");
 
     if (patientId == null || patientId!.isEmpty) {
       print(" No patientId found in SharedPreferences!");

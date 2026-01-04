@@ -281,52 +281,52 @@ Future<void> openNotification(Map<String, dynamic> n) async {
                             ],
                           ),
                         ),
-//                         Stack(
-//                           children: [
-//                             IconButton(
-//                               icon: const Icon(Icons.notifications),
-//                              onPressed: () {
-//   showModalBottomSheet(
-//     context: context,
-//     builder: (_) {
-//       return ListView.builder(
-//         itemCount: notifications.length,
-//         itemBuilder: (context, index) {
-//           final n = notifications[index];
-//           return ListTile(
-//             title: Text(n['message'] ?? ''),
-//             subtitle: Text(n['timestamp'] ?? ''),
-//             onTap: () {
-//               Navigator.pop(context);
-//               openNotification(n);
-//             },
-//           );
-//         },
-//       );
-//     },
-//   );
-// },
+                        Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications),
+                             onPressed: () {
+  showModalBottomSheet(
+    context: context,
+    builder: (_) {
+      return ListView.builder(
+        itemCount: notifications.length,
+        itemBuilder: (context, index) {
+          final n = notifications[index];
+          return ListTile(
+            title: Text(n['message'] ?? ''),
+            subtitle: Text(n['timestamp'] ?? ''),
+            onTap: () {
+              Navigator.pop(context);
+              openNotification(n);
+            },
+          );
+        },
+      );
+    },
+  );
+},
 
-//                             ),
-//                             if (notificationCount > 0)
-//                               Positioned(
-//                                 right: 6,
-//                                 top: 6,
-//                                 child: Container(
-//                                   padding: const EdgeInsets.all(4),
-//                                   decoration: const BoxDecoration(
-//                                     color: Colors.red,
-//                                     shape: BoxShape.circle,
-//                                   ),
-//                                   child: Text(
-//                                     notificationCount.toString(),
-//                                     style: const TextStyle(
-//                                         color: Colors.white, fontSize: 12),
-//                                   ),
-//                                 ),
-//                               )
-//                           ],
-//                         ),
+                            ),
+                            if (notificationCount > 0)
+                              Positioned(
+                                right: 6,
+                                top: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    notificationCount.toString(),
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 12),
+                                  ),
+                                ),
+                              )
+                          ],
+                        ),
                         IconButton(
                           icon: const Icon(
                             Icons.logout,
