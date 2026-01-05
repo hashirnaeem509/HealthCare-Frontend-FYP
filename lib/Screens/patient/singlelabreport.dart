@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare/services/LabReportService.dart';
 
-
 class SingleLabReportScreen extends StatefulWidget {
   final String patientId;
   final String reportId;
@@ -28,61 +27,50 @@ class _SingleLabReportScreenState extends State<SingleLabReportScreen> {
     loadReport();
   }
 
- Future<void> loadReport() async {
-  debugPrint("📄 Loading lab report...");
-  debugPrint("➡ patientId: ${widget.patientId}");
-  debugPrint("➡ reportId: ${widget.reportId}");
+  Future<void> loadReport() async {
+    debugPrint("📄 Loading lab report...");
+    debugPrint("➡ patientId: ${widget.patientId}");
+    debugPrint("➡ reportId: ${widget.reportId}");
 
-  try {
-    final allReports = await labService.getPatientReports(widget.patientId);
+    try {
+      final allReports = await labService.getPatientReports(widget.patientId);
 
-    debugPrint("✅ Lab report API success");
-    debugPrint("📦 Response: $allReports");
+      // Filter all fields for this report
+      final reportFields = allReports
+          .where((r) => r['reportId'].toString() == widget.reportId)
+          .toList();
 
-    // Filter all fields for this report
-    final reportFields = allReports
-        .where((r) => r['reportId'].toString() == widget.reportId)
-        .toList();
+      if (reportFields.isEmpty) {
+        setState(() => loading = false);
+        return;
+      }
 
-    if (reportFields.isEmpty) {
-      debugPrint("❌ Report not found");
+      // ✅ BUILD REPORT OBJECT (API critical FLAG TRUSTED)
+      final reportObj = {
+        'reportId': widget.reportId,
+        'reportName': reportFields[0]['reportName'],
+        'reportDate': reportFields[0]['date'],
+        'reportTime': reportFields[0]['time'],
+        'parameters': reportFields.map((f) => {
+              'name': f['fieldName'],
+              'value': f['value'],
+              'unit': f['unit'],
+              'minRange': f['minRange'],
+              'maxRange': f['maxRange'],
+              'critical': f['critical'] == true, // ✅ FIX HERE
+            }).toList(),
+      };
+
+      setState(() {
+        report = reportObj;
+        loading = false;
+      });
+    } catch (e, stack) {
+      debugPrint("❌ Lab report load FAILED");
+      debugPrint("❌ Error: $e");
+      debugPrint("📌 Stack: $stack");
       setState(() => loading = false);
-      return;
     }
-
-    // Build a report object with parameters
-    final reportObj = {
-      'reportId': widget.reportId,
-      'reportName': reportFields[0]['reportName'],
-      'reportDate': reportFields[0]['date'],
-      'reportTime': reportFields[0]['time'],
-      'parameters': reportFields.map((f) => {
-        'name': f['fieldName'],
-        'value': f['value'],
-        'unit': f['unit'],
-        'minRange': f['minRange'] ?? 0, // optional
-        'maxRange': f['maxRange'] ?? 9999, // optional
-        'critical': f['critical'] ?? false,
-      }).toList(),
-    };
-
-    setState(() {
-      report = reportObj;
-      loading = false;
-    });
-  } catch (e, stack) {
-    debugPrint("❌ Lab report load FAILED");
-    debugPrint("❌ Error: $e");
-    debugPrint("📌 Stack: $stack");
-
-    setState(() => loading = false);
-  }
-}
-
-  bool isCritical(dynamic value, dynamic min, dynamic max) {
-    final v = double.tryParse(value.toString());
-    if (v == null) return false;
-    return v < min || v > max;
   }
 
   @override
@@ -114,17 +102,13 @@ class _SingleLabReportScreenState extends State<SingleLabReportScreen> {
 
                       const SizedBox(height: 10),
 
-                      /// PARAMETERS
+                      /// PARAMETERS (UI UNCHANGED)
                       Expanded(
                         child: ListView.builder(
                           itemCount: report!['parameters'].length,
                           itemBuilder: (_, i) {
                             final p = report!['parameters'][i];
-                            final critical = isCritical(
-                              p['value'],
-                              p['minRange'],
-                              p['maxRange'],
-                            );
+                            final bool critical = p['critical'] == true;
 
                             return Card(
                               color: critical
