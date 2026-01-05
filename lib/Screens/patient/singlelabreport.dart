@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare/services/LabReportService.dart';
-import 'package:collection/collection.dart';
 
 
 class SingleLabReportScreen extends StatefulWidget {

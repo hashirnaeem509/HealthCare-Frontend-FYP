@@ -10,7 +10,11 @@ class LabTrendPage extends StatefulWidget {
   final int labTestId;
   final String labTestName;
 
-  const LabTrendPage({super.key, required this.labTestId, required this.labTestName});
+  const LabTrendPage({
+    super.key,
+    required this.labTestId,
+    required this.labTestName,
+  });
 
   @override
   State<LabTrendPage> createState() => _LabTrendPageState();
@@ -78,28 +82,29 @@ class _LabTrendPageState extends State<LabTrendPage> {
     try {
       final reports = await LabReportService().getPatientReports(patientId);
 
-      // Filter for this lab test
       final filtered = reports
           .where((r) => r['reportName'] == widget.labTestName)
           .toList();
 
-      // Extract unique fields
-      final uniqueFields = filtered.map((r) => r['fieldName'] as String).toSet().toList();
+      final uniqueFields =
+          filtered.map((r) => r['fieldName'] as String).toSet().toList();
 
-      // Group by field
       Map<String, List<Map<String, dynamic>>> grouped = {};
+
       for (var field in uniqueFields) {
         final fieldReports = filtered
             .where((r) => r['fieldName'] == field)
             .map((r) => {
                   'date': r['date'],
                   'value': (r['value'] as num).toDouble(),
-                  'reportId': r['reportId'],
+                  // ✅ CRITICAL FLAG ADDED
+                  'isCritical': r['critical'] == true || r['isCritical'] == true,
                 })
             .toList();
 
         fieldReports.sort((a, b) =>
             DateTime.parse(a['date']).compareTo(DateTime.parse(b['date'])));
+
         grouped[field] = fieldReports;
       }
 
@@ -122,7 +127,9 @@ class _LabTrendPageState extends State<LabTrendPage> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(fieldName),
-        content: Text("Date: ${report['date']}\nValue: ${report['value']}"),
+        content: Text(
+          "Date: ${report['date']}\nValue: ${report['value']}",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -139,8 +146,11 @@ class _LabTrendPageState extends State<LabTrendPage> {
         selectedField != null ? groupedByField[selectedField!] ?? [] : [];
 
     final maxY = dataForField.isNotEmpty
-        ? (dataForField.map((v) => v['value'] as double).reduce((a, b) => a > b ? a : b) * 1.2)
-        : 1.0;
+        ? (dataForField
+                .map((v) => v['value'] as double)
+                .reduce((a, b) => a > b ? a : b) *
+            1.2)
+        : 7000.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -165,7 +175,8 @@ class _LabTrendPageState extends State<LabTrendPage> {
                           radius: 35,
                           backgroundImage: patientImage != null
                               ? NetworkImage(patientImage!)
-                              : const AssetImage('assets/icons/patient.png'),
+                              : const AssetImage('assets/icons/patient.png')
+                                  as ImageProvider,
                         ),
                         const SizedBox(width: 16),
                         Column(
@@ -174,7 +185,8 @@ class _LabTrendPageState extends State<LabTrendPage> {
                             Text(
                               patientName,
                               style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
                             ),
                             Text("${widget.labTestName} Trend"),
                           ],
@@ -207,7 +219,7 @@ class _LabTrendPageState extends State<LabTrendPage> {
                       ),
                     const SizedBox(height: 20),
 
-                    // Chart or no data
+                    // Chart
                     SizedBox(
                       height: 300,
                       child: dataForField.isEmpty
@@ -221,66 +233,119 @@ class _LabTrendPageState extends State<LabTrendPage> {
                               BarChartData(
                                 alignment: BarChartAlignment.spaceAround,
                                 maxY: maxY,
+
                                 barTouchData: BarTouchData(
-  enabled: true,
-  touchCallback: (event, response) {
-    if (response == null || response.spot == null) return;
+                                  enabled: true,
+                                  touchCallback: (event, response) {
+                                    if (response == null ||
+                                        response.spot == null) return;
 
-    // ✅ Only react on tap up (click)
-    if (event is FlTapUpEvent) {
-      final index = response.spot!.touchedBarGroupIndex;
-      final report = dataForField[index];
+                                    if (event is FlTapUpEvent) {
+                                      final index = response
+                                          .spot!.touchedBarGroupIndex;
+                                      final report = dataForField[index];
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showValueDialog(selectedField!, report);
-      });
-    }
-  },
-),
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        if (!mounted) return;
+                                        showValueDialog(
+                                            selectedField!, report);
+                                      });
+                                    }
+                                  },
+                                ),
 
                                 titlesData: FlTitlesData(
                                   leftTitles: AxisTitles(
+                                    sideTitles:
+                                        SideTitles(showTitles: false),
+                                  ),
+                                  rightTitles: AxisTitles(
                                     sideTitles: SideTitles(
                                       showTitles: true,
-                                      interval: 1,
+                                      interval: 1000,
+                                      reservedSize: 45,
+                                     getTitlesWidget: (value, meta) {
+  // If value is 1000 or more, show in 'K'
+  if (value >= 1000) {
+    return Text(
+      "${(value / 1000).toInt()}K",
+      style: const TextStyle(fontSize: 12),
+    );
+  } else {
+    // If value is less than 1000, show normally without 'K'
+    return Text(
+      "${value.toInt()}",
+      style: const TextStyle(fontSize: 12),
+    );
+  }
+},
+
+                                      
                                     ),
                                   ),
                                   bottomTitles: AxisTitles(
                                     sideTitles: SideTitles(
                                       showTitles: true,
-                                      interval: 1,
                                       reservedSize: 40,
                                       getTitlesWidget: (value, meta) {
                                         final index = value.toInt();
-                                        if (index < 0 || index >= dataForField.length) {
+                                        if (index < 0 ||
+                                            index >= dataForField.length) {
                                           return const SizedBox.shrink();
                                         }
                                         return Padding(
-                                          padding: const EdgeInsets.only(top: 4),
+                                          padding:
+                                              const EdgeInsets.only(top: 4),
                                           child: Text(
                                             dataForField[index]['date'],
-                                            style: const TextStyle(fontSize: 10),
+                                            style:
+                                                const TextStyle(fontSize: 10),
                                           ),
                                         );
                                       },
                                     ),
                                   ),
+                                  topTitles: AxisTitles(
+                                    sideTitles:
+                                        SideTitles(showTitles: false),
+                                  ),
                                 ),
-                                borderData: FlBorderData(show: false),
-                                barGroups: List.generate(dataForField.length, (index) {
-                                  final val = (dataForField[index]['value'] as num).toDouble();
-                                  return BarChartGroupData(
-                                    x: index,
-                                    barRods: [
-                                      BarChartRodData(
-                                        toY: val,
-                                        color: Colors.blue,
-                                        width: 18,
-                                      ),
-                                    ],
-                                  );
-                                }),
+
+                                borderData:
+                                    FlBorderData(show: false),
+
+                                // ✅ CRITICAL COLOR LOGIC HERE
+                                barGroups: List.generate(
+                                  dataForField.length,
+                                  (index) {
+                                    final item = dataForField[index];
+                                    final double val = item['value'];
+                                    final bool isCritical =
+                                        item['isCritical'] == true;
+
+                                    return BarChartGroupData(
+                                      x: index,
+                                      barRods: [
+                                        BarChartRodData(
+                                          toY: val,
+                                          width: 18,
+                                          color: isCritical
+                                              ? Colors.red
+                                              : Colors.blue,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          borderSide: isCritical
+                                              ? const BorderSide(
+                                                  color: Colors.redAccent,
+                                                  width: 2,
+                                                )
+                                              : BorderSide.none,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                     ),

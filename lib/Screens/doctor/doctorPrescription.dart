@@ -156,13 +156,19 @@ class _DoctorPatientPrescriptionScreenState
 
             // Save Button
             ElevatedButton(
+              
               onPressed: _savePrescription,
+              style: ElevatedButton.styleFrom(
+                          //  shape: const CircleBorder(),
+                            backgroundColor: Colors.lightBlue,
+                            foregroundColor: Colors.white,),
               child: const Text('Save Prescription'),
             ),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+         backgroundColor: Colors.lightBlue,
         currentIndex: 1,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

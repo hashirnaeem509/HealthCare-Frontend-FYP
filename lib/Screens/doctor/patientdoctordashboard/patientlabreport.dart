@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientdocrecommented.dart';
 import 'package:healthcare/config_/api_config.dart';
 import 'package:healthcare/services/LabReportService.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:healthcare/Screens/doctor/patientdoctordashboard/patientdocrecommented.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class PatientLabReportsScreen extends StatefulWidget {
   final Map<String, dynamic> patient;
 
-  const PatientLabReportsScreen({super.key, required this.patient, required String reportId, required String patientId});
+  const PatientLabReportsScreen({
+    super.key,
+    required this.patient,
+    required String reportId,
+    required String patientId,
+  });
 
   @override
   State<PatientLabReportsScreen> createState() =>
@@ -21,25 +27,29 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
   final LabReportService _service = LabReportService();
 
+  // Graph state
+  bool showGraph = false;
+  String? selectedGraphField;
+  List<String> graphFields = [];
+  Map<String, List<Map<String, dynamic>>> groupedByField = {};
+  List<Map<String, dynamic>> graphData = [];
+
   @override
   void initState() {
     super.initState();
     loadLabReports();
   }
 
-
   Future<void> loadLabReports() async {
     setState(() {
       loading = true;
       errorMsg = '';
-      
     });
 
     try {
       final data = await _service.getPatientReports(
         widget.patient['id']?.toString() ?? '',
       );
-
 
       Map<String, Map<String, dynamic>> grouped = {};
 
@@ -59,9 +69,7 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
 
         final report = grouped[reportKey]!;
 
-
         final dateTime = {
-          
           'date': r['date']?.toString() ?? '',
           'time': r['time']?.toString() ?? '',
           'reportId': r['reportId']?.toString() ?? '',
@@ -70,7 +78,6 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
             d['date'] == dateTime['date'] && d['time'] == dateTime['time'])) {
           report['dates'].add(dateTime);
         }
-
 
         final fieldName = r['fieldName']?.toString() ?? '';
         var field = report['fields'].firstWhere(
@@ -87,29 +94,28 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
         );
 
         field['values'].add(<String, dynamic>{
-          'value': r['value']?.toString() ?? '',
+          'value': r['value']?.toString() ?? '-',
           'date': r['date']?.toString() ?? '',
           'time': r['time']?.toString() ?? '',
           'isCritical': r['critical'] == true,
         });
+      }
 
-
-        for (var report in grouped.values) {
-      (report['dates'] as List<Map<String, String>>).sort((a, b) {
-        final dtA = DateTime.parse("${a['date']} ${a['time']}");
-        final dtB = DateTime.parse("${b['date']} ${b['time']}");
-        return dtB.compareTo(dtA); // DESCENDING order
-      });
-
-      // Also sort field values according to date/time
-      for (var field in report['fields']) {
-        (field['values'] as List<Map<String, dynamic>>).sort((a, b) {
+      // Sort dates and values descending
+      for (var report in grouped.values) {
+        (report['dates'] as List<Map<String, String>>).sort((a, b) {
           final dtA = DateTime.parse("${a['date']} ${a['time']}");
           final dtB = DateTime.parse("${b['date']} ${b['time']}");
           return dtB.compareTo(dtA);
         });
-      }
-    }
+
+        for (var field in report['fields']) {
+          (field['values'] as List<Map<String, dynamic>>).sort((a, b) {
+            final dtA = DateTime.parse("${a['date']} ${a['time']}");
+            final dtB = DateTime.parse("${b['date']} ${b['time']}");
+            return dtB.compareTo(dtA);
+          });
+        }
       }
 
       setState(() {
@@ -127,67 +133,50 @@ class _PatientLabReportsScreenState extends State<PatientLabReportsScreen> {
   void goBack() {
     Navigator.pop(context);
   }
-  
- /// ✅ Angular-style navigation with doctorId log
-void goToRecommend() async {
-  // 1️⃣ Read doctorId from SharedPreferences
-  final prefs = await SharedPreferences.getInstance();
-  final doctorIdStr = prefs.getString('doctorId');
-  print('🔹 goToRecommend: doctorIdStr from SharedPreferences: $doctorIdStr');
 
-  if (doctorIdStr == null || doctorIdStr.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Doctor not logged in')),
-    );
-    return;
-  }
+  void goToRecommend() async {
+    final prefs = await SharedPreferences.getInstance();
+    final doctorIdStr = prefs.getString('doctorId');
+    if (doctorIdStr == null || doctorIdStr.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Doctor not logged in')),
+      );
+      return;
+    }
 
-  final doctorId = int.tryParse(doctorIdStr);
-  if (doctorId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Invalid doctor ID')),
-    );
-    return;
-  }
-  print('🟢 goToRecommend: doctorId parsed as int: $doctorId');
+    final doctorId = int.tryParse(doctorIdStr);
+    if (doctorId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid doctor ID')),
+      );
+      return;
+    }
 
-  // 2️⃣ Prepare reports to send
-  final reportsToSend = reports.expand((r) {
-    return (r['dates'] as List).map((d) {
-      final reportId = d['reportId'];
-      if (reportId == null) {
-        print('🔴 Warning: reportId is null for report ${r['reportName']}');
-      }
-      return {
-        'reportId': reportId,
-        'reportName': r['reportName'],
-        'labName': r['labName'],
-        'date': d['date'],
-        'time': d['time'],
-      };
-    });
-  }).toList();
+    final reportsToSend = reports.expand((r) {
+      return (r['dates'] as List).map((d) {
+        return {
+          'reportId': d['reportId'],
+          'reportName': r['reportName'],
+          'labName': r['labName'],
+          'date': d['date'],
+          'time': d['time'],
+        };
+      });
+    }).toList();
 
-  print('🟢 goToRecommend: Sending ${reportsToSend.length} reports to DoctorRecommendScreen');
-
-  // 3️⃣ Navigate to DoctorRecommendScreen
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => DoctorRecommendScreen(
-        patient: {
-          'id': widget.patient['id'],
-          'fullName': widget.patient['fullName'],
-        },
-        reports: reportsToSend,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DoctorRecommendScreen(
+          patient: {
+            'id': widget.patient['id'],
+            'fullName': widget.patient['fullName'],
+          },
+          reports: reportsToSend,
+        ),
       ),
-    ),
-  );
-}
-
-
-
-  
+    );
+  }
 
   String getFieldValue(Map<String, dynamic> field, String date, String time) {
     final values = (field['values'] as List<dynamic>).cast<Map<String, dynamic>>();
@@ -207,21 +196,47 @@ void goToRecommend() async {
     return val['isCritical'] == true;
   }
 
+  // Show graph inline
+  void showGraphForReport(Map<String, dynamic> report) {
+    final allFields = (report['fields'] as List)
+        .map((f) => f['fieldName'].toString())
+        .toList();
+
+    Map<String, List<Map<String, dynamic>>> grouped = {};
+    for (var f in report['fields']) {
+      grouped[f['fieldName']] = (f['values'] as List<dynamic>)
+          .map((v) => {
+                'date': v['date'] ?? '',
+                'value': double.tryParse(v['value']?.toString() ?? '') ?? 0.0,
+                'isCritical': v['isCritical'] == true,
+              })
+          .toList();
+    }
+
+    setState(() {
+      showGraph = true;
+      graphFields = allFields;
+      groupedByField = grouped;
+      selectedGraphField = allFields.isNotEmpty ? allFields.first : null;
+      graphData = grouped[selectedGraphField!]!;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final patient = widget.patient;
 
     return Scaffold(
       appBar: AppBar(
-  title: Text("${patient['fullName']} Lab Reports"),
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: goBack,
-  ),
-  backgroundColor: Colors.lightBlue,
- actions: [
+        title: Text("${patient['fullName']} Lab Reports"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: goBack,
+        ),
+        backgroundColor: Colors.lightBlue,
+        actions: [
           TextButton.icon(
-            onPressed: goToRecommend, // ✅ FIXED
+            onPressed: goToRecommend,
             icon: const Icon(Icons.recommend, color: Colors.white),
             label: const Text(
               "Recommended",
@@ -229,7 +244,7 @@ void goToRecommend() async {
             ),
           ),
         ],
-),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : errorMsg.isNotEmpty
@@ -249,20 +264,24 @@ void goToRecommend() async {
                           height: 90,
                           width: 90,
                           decoration: BoxDecoration(
-    shape: BoxShape.circle,
-    image: patient['profileImageUrl'] != null &&
-            patient['profileImageUrl'].toString().isNotEmpty
-        ? DecorationImage(
-            image: NetworkImage(
-              ApiConfig.resolveImageUrl(patient['profileImageUrl']),
-            ),
-            fit: BoxFit.cover,
-          )
-        : const DecorationImage(
-            image: AssetImage('assets/images/download.png'),
-            fit: BoxFit.cover,
-          ),
-  ),
+                            shape: BoxShape.circle,
+                            image: patient['profileImageUrl'] != null &&
+                                    patient['profileImageUrl'].toString().isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(
+                                      // Use 10.0.2.2 if using Android emulator
+                                      ApiConfig.resolveImageUrl(
+                                          patient['profileImageUrl']),
+                                    ),
+                                    fit: BoxFit.cover,
+                                    onError: (_, __) {},
+                                  )
+                                : const DecorationImage(
+                                    image:
+                                        AssetImage('assets/images/download.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Column(
@@ -281,7 +300,8 @@ void goToRecommend() async {
 
                     // Lab Reports
                     ...reports.map((report) {
-                      final fields = report['fields'] as List<Map<String, dynamic>>;
+                      final fields =
+                          report['fields'] as List<Map<String, dynamic>>;
                       final dates = report['dates'] as List<Map<String, String>>;
 
                       return Card(
@@ -291,16 +311,29 @@ void goToRecommend() async {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "${report['reportName']} — ${report['labName']}",
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${report['reportName']} — ${report['labName']}",
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: () =>
+                                        showGraphForReport(report),
+                                    icon: const Icon(Icons.bar_chart),
+                                    label: const Text("View Graph"),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 8),
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: DataTable(
-                                  headingRowColor: WidgetStateProperty.all(
+                                  headingRowColor: MaterialStateProperty.all(
                                       Colors.blue.shade300),
                                   headingTextStyle: const TextStyle(
                                       color: Colors.white,
@@ -308,7 +341,8 @@ void goToRecommend() async {
                                   columns: [
                                     const DataColumn(label: Text('Field Name')),
                                     ...dates.map((d) => DataColumn(
-                                        label: Text("${d['date']}\n${d['time']}"))),
+                                        label:
+                                            Text("${d['date']}\n${d['time']}"))),
                                     const DataColumn(label: Text('Unit')),
                                   ],
                                   rows: fields.map<DataRow>((f) {
@@ -316,14 +350,20 @@ void goToRecommend() async {
                                       cells: [
                                         DataCell(Text(f['fieldName'] ?? '')),
                                         ...dates.map((d) {
-                                          final val = getFieldValue(f, d['date']!, d['time']!);
-                                          final isCritical = isCriticalValue(f, d['date']!, d['time']!);
+                                          final val = getFieldValue(
+                                              f, d['date']!, d['time']!);
+                                          final isCritical = isCriticalValue(
+                                              f, d['date']!, d['time']!);
                                           return DataCell(
                                             Text(
                                               val,
                                               style: TextStyle(
-                                                color: isCritical ? Colors.red : Colors.black,
-                                                fontWeight: isCritical ? FontWeight.bold : FontWeight.normal,
+                                                color: isCritical
+                                                    ? Colors.red
+                                                    : Colors.black,
+                                                fontWeight: isCritical
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
                                               ),
                                             ),
                                           );
@@ -338,10 +378,100 @@ void goToRecommend() async {
                           ),
                         ),
                       );
-                    }),
+                    }).toList(),
+
+                    // Inline Graph Display
+                    if (showGraph && graphData.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Graph View",
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Text("Select Field: "),
+                                const SizedBox(width: 10),
+                                DropdownButton<String>(
+                                  value: selectedGraphField,
+                                  items: graphFields
+                                      .map((f) => DropdownMenuItem(
+                                          value: f, child: Text(f)))
+                                      .toList(),
+                                  onChanged: (val) {
+                                    if (val == null) return;
+                                    setState(() {
+                                      selectedGraphField = val;
+                                      graphData = groupedByField[val]!;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 300,
+                              child: BarChart(
+                                BarChartData(
+                                  alignment: BarChartAlignment.spaceAround,
+                                  maxY: graphData.isNotEmpty
+                                      ? graphData
+                                              .map((v) => v['value'] as double)
+                                              .reduce((a, b) => a > b ? a : b) *
+                                          1.2
+                                      : 100.0,
+                                  barTouchData: BarTouchData(enabled: true),
+                                  titlesData: FlTitlesData(
+                                    bottomTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        getTitlesWidget: (value, meta) {
+                                          final index = value.toInt();
+                                          if (index < 0 ||
+                                              index >= graphData.length) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return Text(
+                                              graphData[index]['date']);
+                                        },
+                                      ),
+                                    ),
+                                    leftTitles: AxisTitles(
+                                      sideTitles: SideTitles(showTitles: true),
+                                    ),
+                                  ),
+                                  borderData: FlBorderData(show: false),
+                                  barGroups: List.generate(
+                                    graphData.length,
+                                    (index) {
+                                      final item = graphData[index];
+                                      return BarChartGroupData(
+                                        x: index,
+                                        barRods: [
+                                          BarChartRodData(
+                                            toY: item['value'] as double,
+                                            width: 18,
+                                            color: item['isCritical'] == true
+                                                ? Colors.red
+                                                : Colors.blue,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
     );
   }
-
 }
