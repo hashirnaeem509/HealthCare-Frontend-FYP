@@ -240,20 +240,3 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     );
   }
 }
-
-// Placeholder screen to represent Lab Reports or Prescriptions
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  final Map<String, dynamic> patient;
-
-  const PlaceholderScreen({super.key, required this.title, required this.patient});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('Screen for $title of ${patient['fullName']}')),
-      
-    );
-  }
-}

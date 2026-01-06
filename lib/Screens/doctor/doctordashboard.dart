@@ -18,8 +18,13 @@ class DoctorDashboard extends StatefulWidget {
 class _DoctorDashboardState extends State<DoctorDashboard> {
   Map<String, dynamic> doctor = {};
   bool doctorLoading = true;
+
   List<dynamic> patients = [];
+  List<dynamic> filteredPatients = [];
+
   bool isLoading = true;
+
+  final TextEditingController _searchController = TextEditingController();
 
   List<dynamic> notifications = [];
   int notificationCount = 0;
@@ -39,7 +44,19 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   @override
   void dispose() {
     notificationTimer?.cancel();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _searchPatient(String value) {
+    setState(() {
+      filteredPatients = patients
+          .where((p) => (p['fullName'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(value.toLowerCase()))
+          .toList();
+    });
   }
 
   Future<void> fetchNotifications() async {
@@ -105,8 +122,10 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     );
 
     if (response.statusCode == 200) {
+      final data = json.decode(response.body);
       setState(() {
-        patients = json.decode(response.body);
+        patients = data;
+        filteredPatients = data;
         isLoading = false;
       });
     }
@@ -197,6 +216,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
       body: SafeArea(
         child: Column(
           children: [
+            /// HEADER (UNCHANGED)
             Container(
               padding: const EdgeInsets.only(bottom: 16),
               decoration: const BoxDecoration(
@@ -252,17 +272,37 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     style: const TextStyle(
                         fontSize: 24, fontWeight: FontWeight.bold),
                   ),
+
+                  /// 🔍 SEARCH BAR (ADDED)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _searchPatient,
+                      decoration: InputDecoration(
+                        hintText: 'Search patient by name',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
+
+            /// PATIENT LIST
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: patients.length,
+                      itemCount: filteredPatients.length,
                       itemBuilder: (_, i) {
-                        final p = patients[i];
+                        final p = filteredPatients[i];
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(

@@ -26,11 +26,15 @@ class AuthService {
     };
 
     try {
+          print("📡 Sending register request to $apiUrl");
+    print("📋 Request body: ${jsonEncode(userData)}");
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(userData),
+        
       );
+      
 
       final responseBody = jsonDecode(response.body);
 

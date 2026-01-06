@@ -27,7 +27,6 @@ class _PatientdashboradState extends State<Patientdashborad> {
 
   List<Map<String, dynamic>> notifications = [];
   int notificationCount = 0;
-  bool showNotifications = false;
 
   @override
   void initState() {
@@ -37,89 +36,86 @@ class _PatientdashboradState extends State<Patientdashborad> {
   }
 
   // ================= Notifications =================
-Future<void> openNotification(Map<String, dynamic> n) async {
-  final prefs = await SharedPreferences.getInstance();
+  Future<void> openNotification(Map<String, dynamic> n) async {
+    final prefs = await SharedPreferences.getInstance();
 
-  // get active patient id
-  final patientIdStr = prefs.getString('activePatientId');
-  if (patientIdStr == null || patientIdStr.isEmpty) {
-    print("❌ activePatientId is null");
-    return;
-  }
+    final patientIdStr = prefs.getString('activePatientId');
+    if (patientIdStr == null || patientIdStr.isEmpty) {
+      print("❌ activePatientId is null");
+      return;
+    }
 
-  final int? patientId = int.tryParse(patientIdStr);
-  if (patientId == null) {
-    print("❌ patientId parsing failed");
-    return;
-  }
+    final int? patientId = int.tryParse(patientIdStr);
+    if (patientId == null) {
+      print("❌ patientId parsing failed");
+      return;
+    }
 
-  final int? doctorId = n['doctorId'];
-  if (doctorId == null) {
-    print("❌ doctorId missing in notification");
-    return;
-  }
+    final int? doctorId = n['doctorId'];
+    if (doctorId == null) {
+      print("❌ doctorId missing in notification");
+      return;
+    }
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => PatientPrescriptionScreen(
-        doctorId: doctorId,
-        patientId: patientId,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PatientPrescriptionScreen(
+          doctorId: doctorId,
+          patientId: patientId,
+        ),
       ),
-    ),
-  );
-}
-
-
+    );
+  }
 
   Future<String?> _getActivePatientId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('activePatientId');
   }
 
- Future<void> _loadNotifications() async {
-  final patientId = await _getActivePatientId();
-  if (patientId == null) return;
+  Future<void> _loadNotifications() async {
+    final patientId = await _getActivePatientId();
+    if (patientId == null) return;
 
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final cookie = prefs.getString('session_cookie');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cookie = prefs.getString('session_cookie');
 
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/prescriptions/$patientId'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (cookie != null) 'Cookie': cookie,
-      },
-    );
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/prescriptions/$patientId'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (cookie != null) 'Cookie': cookie,
+        },
+      );
 
-    print("🔹 Notification API status: ${response.statusCode}");
-    print("🔹 Notification API body: ${response.body}");
+      print("🔹 Notification API status: ${response.statusCode}");
+      print("🔹 Notification API body: ${response.body}");
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is List) {
-        notifications = data
-            .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
-            .toList();
-      } else if (data is Map) {
-        notifications = [Map<String, dynamic>.from(data)];
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          notifications = data
+              .map<Map<String, dynamic>>(
+                  (e) => Map<String, dynamic>.from(e))
+              .toList();
+        } else if (data is Map) {
+          notifications = [Map<String, dynamic>.from(data)];
+        } else {
+          notifications = [];
+        }
+
+        setState(() {
+          notificationCount = notifications.length;
+        });
       } else {
-        notifications = [];
+        print(
+            "❌ Failed to load notifications: ${response.statusCode} – ${response.body}");
       }
-
-      setState(() {
-        notificationCount = notifications.length;
-      });
-    } else {
-      print(
-          "❌ Failed to load notifications: ${response.statusCode} – ${response.body}");
+    } catch (e) {
+      print("❌ Error fetching notifications: $e");
     }
-  } catch (e) {
-    print("❌ Error fetching notifications: $e");
   }
-}
-
 
   void _loadNotificationsPeriodically() {
     _loadNotifications();
@@ -167,6 +163,7 @@ Future<void> openNotification(Map<String, dynamic> n) async {
 
     await prefs.setString('activePatientId', mainPatientId);
     _loadPatientInfo();
+    _loadNotifications();
   }
 
   Future<void> _logout() async {
@@ -180,13 +177,20 @@ Future<void> openNotification(Map<String, dynamic> n) async {
     }
   }
 
-  Future<void> _openFamilyScreen() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const FamilyMemberScreen()),
-    );
-    _loadPatientInfo();
+ Future<void> _openFamilyScreen() async {
+  final switched = await Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const FamilyMemberScreen()),
+  );
+
+  // If a profile was switched, reload patient info
+  if (switched == true) {
+    await _loadPatientInfo();
+    await _loadNotifications(); // reload notifications for new activePatientId
   }
+}
+
+  
 
   Future<void> _openDiseaseScreen() async {
     await Navigator.push(
@@ -254,21 +258,6 @@ Future<void> openNotification(Map<String, dynamic> n) async {
                         Expanded(
                           child: Row(
                             children: [
-                            //  Flexible(
-                                // child: Text(
-                                //   fullName != null
-                                //       ? "Welcome, $fullName"
-                                //       : "Welcome",
-                                //   maxLines: 2,
-                                //   overflow: TextOverflow.ellipsis,
-                                //   style: const TextStyle(
-                                //     fontSize: 20,
-                                //     color: Color.fromARGB(255, 32, 25, 25),
-                                //     decoration: TextDecoration.underline,
-                                //     decorationColor: Color.fromARGB(255, 16, 13, 13),
-                                //   ),
-                                // ),
-                              //),
                               if (!isPrimaryProfile)
                                 TextButton(
                                   onPressed: _switchBackToPrimary,
@@ -285,28 +274,27 @@ Future<void> openNotification(Map<String, dynamic> n) async {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.notifications),
-                             onPressed: () {
-  showModalBottomSheet(
-    context: context,
-    builder: (_) {
-      return ListView.builder(
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final n = notifications[index];
-          return ListTile(
-            title: Text(n['message'] ?? ''),
-            subtitle: Text(n['timestamp'] ?? ''),
-            onTap: () {
-              Navigator.pop(context);
-              openNotification(n);
-            },
-          );
-        },
-      );
-    },
-  );
-},
-
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (_) {
+                                    return ListView.builder(
+                                      itemCount: notifications.length,
+                                      itemBuilder: (context, index) {
+                                        final n = notifications[index];
+                                        return ListTile(
+                                          title: Text(n['message'] ?? ''),
+                                          subtitle: Text(n['timestamp'] ?? ''),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            openNotification(n);
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
                             ),
                             if (notificationCount > 0)
                               Positioned(
@@ -342,21 +330,22 @@ Future<void> openNotification(Map<String, dynamic> n) async {
                     // Profile row
                     Row(
                       children: [
-                       Container(
-  height: 90,
-  width: 90,
-  decoration: BoxDecoration(
-    shape: BoxShape.circle,
-    color: Colors.white,
-    image: DecorationImage(
-      image: profileImageUrl != null
-          ? NetworkImage(profileImageUrl!)
-          : const AssetImage('assets/images/download.png') as ImageProvider,
-      fit: BoxFit.cover,
-    ),
-  ),
-),
-
+                        Container(
+                          height: 90,
+                          width: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            image: DecorationImage(
+                              image: profileImageUrl != null
+                                  ? NetworkImage(profileImageUrl!)
+                                  : const AssetImage(
+                                          'assets/images/download.png')
+                                      as ImageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(

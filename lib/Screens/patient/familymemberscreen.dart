@@ -39,39 +39,43 @@ class _FamilyMemberScreenState extends State<FamilyMemberScreen> {
 
     if (primaryId == null) return;
 
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/associate/list/$primaryId'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (cookie != null) 'Cookie': cookie,
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/associate/list/$primaryId'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (cookie != null) 'Cookie': cookie,
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final associations = jsonDecode(response.body);
-      List<dynamic> detailed = [];
+      if (response.statusCode == 200) {
+        final associations = jsonDecode(response.body);
+        List<dynamic> detailed = [];
 
-      for (var assoc in associations) {
-        final patientRes = await http.get(
-          Uri.parse('${ApiConfig.baseUrl}/patient/${assoc['patientId']}'),
-          headers: {
-            if (cookie != null) 'Cookie': cookie,
-          },
-        );
+        for (var assoc in associations) {
+          final patientRes = await http.get(
+            Uri.parse('${ApiConfig.baseUrl}/patient/${assoc['patientId']}'),
+            headers: {
+              if (cookie != null) 'Cookie': cookie,
+            },
+          );
 
-        if (patientRes.statusCode == 200) {
-          final patient = jsonDecode(patientRes.body);
-          detailed.add({
-            'patientId': assoc['patientId'],
-            'relationType': assoc['relationType'],
-            'fullName': patient['fullName'],
-            'dob': patient['dob'],
-            'profileImageUrl': patient['profileImageUrl'],
-          });
+          if (patientRes.statusCode == 200) {
+            final patient = jsonDecode(patientRes.body);
+            detailed.add({
+              'patientId': assoc['patientId'],
+              'relationType': assoc['relationType'],
+              'fullName': patient['fullName'],
+              'dob': patient['dob'],
+              'profileImageUrl': patient['profileImageUrl'],
+            });
+          }
         }
-      }
 
-      setState(() => associates = detailed);
+        setState(() => associates = detailed);
+      }
+    } catch (e) {
+      print("❌ Error loading family members: $e");
     }
   }
 
@@ -105,9 +109,7 @@ class _FamilyMemberScreenState extends State<FamilyMemberScreen> {
     setState(() => profileImageUrl = data['imageUrl']);
   }
 
-
-
-  // 🔹 Add Family Member (FIXED)
+  // 🔹 Add Family Member
   Future<void> addAssociate() async {
     final prefs = await SharedPreferences.getInstance();
     final primaryId = prefs.getString('userId');
@@ -131,37 +133,47 @@ class _FamilyMemberScreenState extends State<FamilyMemberScreen> {
       'profileImageUrl': profileImageUrl,
     };
 
-    final response = await http.post(
-      Uri.parse(
-        '${ApiConfig.baseUrl}/associate/add?primaryPatientId=$primaryId&relationType=$relationType',
-      ),
-      headers: {
-        'Content-Type': 'application/json',
-        if (cookie != null) 'Cookie': cookie,
-      },
-      body: jsonEncode(payload),
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      loadAssociates();
-      resetForm();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Family member added successfully')),
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${ApiConfig.baseUrl}/associate/add?primaryPatientId=$primaryId&relationType=$relationType',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          if (cookie != null) 'Cookie': cookie,
+        },
+        body: jsonEncode(payload),
       );
-    } else {
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        loadAssociates();
+        resetForm();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Family member added successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${response.body}')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: ${response.body}')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
 
   // 🔹 Switch Profile
-  void switchProfile(int patientId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('activePatientId', patientId.toString());
-    Navigator.pop(context);
-  }
+  // 🔹 Switch Profile
+void switchProfile(int patientId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('activePatientId', patientId.toString());
+
+  // Return true to indicate a switch happened
+  Navigator.pop(context, true);
+}
+
 
   void resetForm() {
     setState(() {
@@ -188,7 +200,6 @@ class _FamilyMemberScreenState extends State<FamilyMemberScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             // Avatar
             Stack(
               children: [
@@ -198,8 +209,8 @@ class _FamilyMemberScreenState extends State<FamilyMemberScreen> {
                       ? FileImage(selectedImage!)
                       : (profileImageUrl != null
                           ? NetworkImage(profileImageUrl!)
-                          : const AssetImage('assets/icons/galleryicon.jpg'))
-                          as ImageProvider,
+                          : const AssetImage('assets/icons/galleryicon.jpg')
+                              as ImageProvider),
                 ),
                 Positioned(
                   bottom: 0,
@@ -275,10 +286,7 @@ class _FamilyMemberScreenState extends State<FamilyMemberScreen> {
                 'Spouse',
                 'Child',
                 'Other'
-              ]
-                  .map((e) =>
-                      DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
+              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: (v) => relationType = v!,
             ),
 
@@ -308,8 +316,7 @@ class _FamilyMemberScreenState extends State<FamilyMemberScreen> {
                               as ImageProvider,
                     ),
                     title: Text(m['fullName']),
-                    subtitle:
-                        Text('${m['relationType']} • ${m['dob']}'),
+                    subtitle: Text('${m['relationType']} • ${m['dob']}'),
                     trailing: TextButton(
                       onPressed: () => switchProfile(m['patientId']),
                       child: const Text('Switch'),

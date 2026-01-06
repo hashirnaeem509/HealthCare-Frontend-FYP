@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare/Screens/patient/sharedata.dart';
+import 'package:flutter/services.dart';
 
 class QRScannerPage extends StatefulWidget {
   const QRScannerPage({super.key});
@@ -13,6 +14,45 @@ class QRScannerPage extends StatefulWidget {
 
 class _QRScannerPageState extends State<QRScannerPage> {
   bool isScanned = false;
+
+  void _showJsonDialog(Map<String, dynamic> doctorData, String rawJson) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Scanned QR Data"),
+          content: SingleChildScrollView(
+            child: SelectableText(
+              const JsonEncoder.withIndent('  ').convert(doctorData),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: rawJson));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("JSON copied")),
+                );
+              },
+              child: const Text("Copy"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => ShareScreen()),
+                );
+              },
+              child: const Text("Continue"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,10 +84,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
               }),
             );
 
-            // ✅ NAVIGATION TO SHARE SCREEN
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => ShareScreen()),
-            );
+            // ✅ SHOW JSON PREVIEW
+            _showJsonDialog(doctorData, code);
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Invalid QR Code")),
